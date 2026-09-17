@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The DACH Reporting Lattice</title>
+<style>
+  :root{
+    --ink:#0B1F33;
+    --ink-2:#132A45;
+    --paper:#EEF0F1;
+    --paper-2:#E2E5E7;
+    --line:#C7CCD1;
+    --eu:#1E4FBB;
+    --de:#2B2B2B;
+    --de-gold:#C9A227;
+    --at:#8B2635;
+    --ch:#D52B1E;
+    --gl:#2E7D6B;
+    --ok-green:#1F7A5C;
+    --text:#12181F;
+    --muted:#5B6570;
+    --mono: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--text);font-family:var(--sans);}
+  .wrap{max-width:1560px;margin:0 auto;padding:28px 22px 60px;}
+
+  header.top{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  h1{font-family:var(--serif);font-weight:400;font-size:clamp(26px,3.4vw,40px);margin:0;letter-spacing:-.01em;line-height:1.05;}
+  h1 em{font-style:italic;color:var(--ink-2);}
+  .sub{font-size:13.5px;color:var(--muted);max-width:560px;line-height:1.5;margin-top:8px;}
+  .basf-tag{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);padding:8px 12px;border-radius:2px;background:#fff;max-width:230px;line-height:1.5;}
+
+  /* Legend */
+  .legend{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:20px;font-size:12px;color:var(--muted);align-items:center;}
+  .legend .grp{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .swatch{width:12px;height:12px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:-1px;}
+  .lstyle{display:inline-block;width:22px;height:0;border-top:2px solid var(--muted);margin-right:6px;vertical-align:3px;}
+  .lstyle.dash{border-top-style:dashed;}
+  .lstyle.dot{border-top-style:dotted;}
+
+  /* filter chips */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+  .chip{font-family:var(--mono);font-size:11.5px;padding:6px 12px;border:1px solid var(--ink);border-radius:20px;cursor:pointer;background:#fff;color:var(--ink);user-select:none;transition:all .15s;}
+  .chip.active{background:var(--ink);color:#fff;}
+  .chip:hover{opacity:.85;}
+
+  .filterpanel{background:#fff;border:1px solid var(--line);border-radius:4px;padding:14px 16px;margin-bottom:18px;display:flex;flex-wrap:wrap;gap:16px 26px;align-items:center;}
+  .fgroup{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .flabel{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+  .fchips{display:flex;gap:5px;flex-wrap:wrap;}
+  .fchip{font-family:var(--mono);font-size:10.5px;padding:4px 9px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--paper);color:var(--muted);user-select:none;transition:all .12s;}
+  .fchip.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .fchip:hover{border-color:var(--ink);}
+  .fcount{font-family:var(--mono);font-size:11.5px;color:var(--ink);font-weight:600;margin-left:auto;white-space:nowrap;}
+  .freset{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-decoration:underline;cursor:pointer;white-space:nowrap;}
+  .freset:hover{color:var(--ink);}
+
+  /* diagram */
+  #diagram-wrap{position:relative;background:#fff;border:1px solid var(--line);border-radius:4px;padding:26px 20px;overflow:hidden;}
+  svg#lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;}
+  .cols{display:flex;gap:14px;position:relative;z-index:2;align-items:flex-start;}
+  .col{flex:1;min-width:0;}
+  .col-narrow{flex:0.72;}
+  .col-spine{flex:0.95;}
+
+  .col-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--paper-2);white-space:nowrap;}
+  .col-title.jt-eu{color:var(--eu);border-bottom-color:var(--eu);}
+  .col-title.jt-gl{color:var(--gl);border-bottom-color:var(--gl);}
+  .col-title.jt-de{color:var(--de);border-bottom-color:var(--de);}
+  .col-title.jt-at{color:var(--at);border-bottom-color:var(--at);}
+  .col-title.jt-ch{color:var(--ch);border-bottom-color:var(--ch);}
+  .col.empty-col{opacity:.25;}
+
+  .node-list{display:flex;flex-direction:column;gap:7px;}
+  .fw-node{
+    font-size:11.5px;line-height:1.3;padding:7px 9px 7px 10px;border-radius:2px;
+    background:var(--paper);cursor:pointer;transition:all .15s ease;
+    border:1.4px solid var(--line);border-left-width:4px;
+  }
+  .fw-node b{display:block;font-size:11.5px;}
+  .fw-node .fw-code{font-family:var(--mono);font-size:9.5px;color:var(--muted);}
+  .fw-node.dim{opacity:.22;}
+  .fw-node.hi{background:#fff;box-shadow:0 0 0 1px currentColor inset;}
+  .fw-node.status-mandatory{border-left-style:solid;}
+  .fw-node.status-pending{border-left-style:dashed;}
+  .fw-node.status-voluntary{border-left-style:dotted;}
+
+  .fw-node.j-eu{border-left-color:var(--eu);color:var(--eu);}
+  .fw-node.j-de{border-left-color:var(--de);color:var(--de);}
+  .fw-node.j-at{border-left-color:var(--at);color:var(--at);}
+  .fw-node.j-ch{border-left-color:var(--ch);color:var(--ch);}
+  .fw-node.j-gl{border-left-color:var(--gl);color:var(--gl);}
+  .fw-node.j-eu b,.fw-node.j-de b,.fw-node.j-at b,.fw-node.j-ch b{color:var(--text);}
+  .fw-node a{color:inherit;text-decoration:none;}
+  .fw-node a:hover{text-decoration:underline;}
+  .fw-node .lnk{opacity:.55;font-size:10px;}
+  .drow .fwname a{color:var(--ink);text-decoration:none;border-bottom:1px dotted var(--muted);}
+  .drow .fwname a:hover{border-bottom-style:solid;}
+  td.code a, td b a{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted);}
+  td.code a:hover, td b a:hover{border-bottom-style:solid;}
+
+  .spine-node{
+    background:var(--ink);color:#fff;border-radius:3px;padding:11px 12px;margin-bottom:10px;cursor:pointer;
+    border:1.4px solid var(--ink); transition:all .15s ease;
+  }
+  .spine-node .code{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:#9FB4CE;}
+  .spine-node .name{font-family:var(--serif);font-size:14.5px;margin-top:1px;}
+  .spine-node .pillar{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#7C93AE;margin-top:3px;}
+  .spine-node.dim{opacity:.25;}
+  .spine-node.hi{background:var(--ink-2);box-shadow:0 0 0 2px #4C6E96;}
+  .spine-node:hover{background:var(--ink-2);}
+
+  .clear-btn{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-align:center;margin-top:6px;cursor:pointer;text-decoration:underline;display:none;}
+
+  /* detail panel */
+  #detail{margin-top:22px;border:1px solid var(--ink);border-radius:4px;background:#fff;display:none;}
+  #detail.show{display:block;}
+  #detail .dhead{background:var(--ink);color:#fff;padding:12px 18px;font-family:var(--serif);font-size:17px;display:flex;justify-content:space-between;align-items:center;}
+  #detail .dhead .x{cursor:pointer;font-family:var(--mono);font-size:12px;color:#9FB4CE;}
+  #detail .drows{padding:6px 18px 16px;}
+  .drow{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--paper-2);font-size:13px;line-height:1.45;}
+  .drow:last-child{border-bottom:none;}
+  .drow .fwname{font-weight:700;}
+  .drow .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px;}
+  .drow .field{display:grid;grid-template-columns:170px 1fr;column-gap:14px;margin-top:7px;align-items:start;}
+  .drow .field b{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding-top:1px;}
+  .drow .field span{min-width:0;}
+  .tag{display:inline-block;font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:10px;color:#fff;margin-right:4px;}
+  .tag.eu{background:var(--eu);} .tag.de{background:var(--de);} .tag.at{background:var(--at);} .tag.ch{background:var(--ch);} .tag.gl{background:var(--gl);}
+  .tag.mand{background:var(--ok-green);} .tag.pend{background:#B8862D;} .tag.vol{background:#7A7F86;}
+
+  /* schema table section */
+  .schema-head{margin:44px 0 14px;border-top:2px solid var(--ink);padding-top:20px;}
+  .schema-head h2{font-family:var(--serif);font-weight:400;font-size:24px;margin:0 0 6px;}
+  .schema-head p{font-size:13px;color:var(--muted);max-width:720px;line-height:1.5;}
+
+  .table-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .table-controls input, .table-controls select{
+    font-family:var(--mono);font-size:12px;padding:7px 10px;border:1px solid var(--ink);border-radius:2px;background:#fff;color:var(--text);
+  }
+  .table-controls input{flex:1;min-width:200px;}
+
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--ink);border-radius:4px;}
+  table{border-collapse:collapse;width:100%;font-size:12px;background:#fff;min-width:1960px;table-layout:fixed;}
+  thead th{
+    position:sticky;top:0;background:var(--ink);color:#fff;text-align:left;font-family:var(--mono);
+    font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:10px 12px;white-space:normal;line-height:1.35;
+  }
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--paper-2);vertical-align:top;line-height:1.4;overflow-wrap:break-word;word-break:break-word;}
+  tbody tr:hover{background:var(--paper);}
+  td.code{font-family:var(--mono);font-weight:700;}
+  td.status span{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:9px;color:#fff;white-space:nowrap;}
+  .st-mand{background:var(--ok-green);} .st-pend{background:#B8862D;} .st-vol{background:#7A7F86;}
+  .jdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
+
+  footer.note{margin-top:26px;font-size:11.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:14px;}
+
+  @media (max-width:980px){
+    .cols{flex-direction:column;}
+    .col{width:100%;}
+    #diagram-wrap{padding:18px 14px;}
+  }
+  @media (max-width:680px){
+    .drow{grid-template-columns:1fr;}
+    .drow .field{grid-template-columns:1fr;row-gap:2px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="kicker">Regulatory Interconnection Map · DACH Scope</div>
+      <h1>The DACH Reporting <em>Lattice</em></h1>
+      <div class="sub">How ESRS/CSRD sustainability modules bond to the surrounding body of regional and local law — modelled on how a comprehensive filer (e.g. BASF) actually reports today.</div>
+    </div>
+    <div class="basf-tag">
+      Reference case: BASF SE reports under German CSR‑RUG (HGB §289b–e/315b–c) while <b>voluntarily</b> applying ESRS in full, since CSRD is not yet transposed into German law — illustrating why "ESRS‑aligned" ≠ "CSRD‑mandatory" in practice.
+    </div>
+  </header>
+
+  <div class="legend">
+    <div class="grp"><b style="font-family:var(--mono);font-size:11px;">Jurisdiction —</b>
+      <span><span class="swatch" style="background:var(--eu)"></span>EU-wide</span>
+      <span><span class="swatch" style="background:var(--gl)"></span>Global voluntary</span>
+      <span><span class="swatch" style="background:var(--de)"></span>Germany</span>
+      <span><span class="swatch" style="background:var(--at)"></span>Austria</span>
+      <span><span class="swatch" style="background:var(--ch)"></span>Switzerland</span>
+    </div>
+    <div class="grp"><b style="font-family:var(--mono);font-size:11px;">Status —</b>
+      <span><span class="lstyle"></span>Mandatory now</span>
+      <span><span class="lstyle dash"></span>Mandatory / transposing</span>
+      <span><span class="lstyle dot"></span>Voluntary</span>
+    </div>
+  </div>
+
+  <div class="legend" id="scopeLegend">
+    <div class="grp"><b style="font-family:var(--mono);font-size:11px;">Scope relationship (click any circled symbol on the diagram, or any table row, for the full breakdown) —</b></div>
+    <div class="grp"><span style="font-family:var(--mono);font-weight:600;">⊆</span> framework narrower than / nested inside the ESRS module</div>
+    <div class="grp"><span style="font-family:var(--mono);font-weight:600;">⊇</span> framework broader than the ESRS module</div>
+    <div class="grp"><span style="font-family:var(--mono);font-weight:600;">≈</span> partial overlap, additionality on both sides</div>
+    <div class="grp"><span style="font-family:var(--mono);font-weight:600;">=</span> co‑extensive by design (e.g. legal basis)</div>
+    <div class="grp" style="color:#12181F;">Solid circle = high‑confidence (official interoperability mapping cited)</div>
+    <div class="grp" style="color:#8a5a1a;">Dashed circle = reasoned comparison, no official mapping found</div>
+    <div class="grp" style="color:var(--muted);font-style:italic;">Note: left‑to‑right position reflects jurisdiction (Global → EU → Germany → Austria → Switzerland → <b>ESRS</b>), not scope size — a framework's ⊆/⊇ badge is judged per connection, since the same framework can be narrower than one module and broader than another.</div>
+  </div>
+
+  <div class="filterpanel" id="filterpanel">
+    <div class="fgroup" data-key="jur"><span class="flabel">Jurisdiction</span><div class="fchips" id="f-jur"></div></div>
+    <div class="fgroup" data-key="status"><span class="flabel">Status</span><div class="fchips" id="f-status"></div></div>
+    <div class="fgroup" data-key="scope"><span class="flabel">Scope relation</span><div class="fchips" id="f-scope"></div></div>
+    <div class="fgroup" data-key="conf"><span class="flabel">Citation confidence</span><div class="fchips" id="f-conf"></div></div>
+    <div class="fcount" id="fcount"></div>
+    <div class="freset" id="freset">reset filters</div>
+  </div>
+
+  <div id="diagram-wrap">
+    <svg id="lines"></svg>
+    <div class="cols">
+      <div class="col col-narrow" data-jur="GL">
+        <div class="col-title jt-gl">Global voluntary</div>
+        <div class="node-list" id="gl-rail"></div>
+      </div>
+      <div class="col col-narrow" data-jur="EU">
+        <div class="col-title jt-eu">EU regulatory</div>
+        <div class="node-list" id="eu-rail"></div>
+      </div>
+      <div class="col col-narrow" data-jur="DE">
+        <div class="col-title jt-de">Germany</div>
+        <div class="node-list" id="de-rail"></div>
+      </div>
+      <div class="col col-narrow" data-jur="AT">
+        <div class="col-title jt-at">Austria</div>
+        <div class="node-list" id="at-rail"></div>
+      </div>
+      <div class="col col-narrow" data-jur="CH">
+        <div class="col-title jt-ch">Switzerland</div>
+        <div class="node-list" id="ch-rail"></div>
+      </div>
+      <div class="col col-spine">
+        <div class="col-title">ESRS / CSRD modules</div>
+        <div id="spine"></div>
+      </div>
+    </div>
+  </div>
+  <div class="clear-btn" id="clearBtn">clear selection</div>
+
+  <div id="detail">
+    <div class="dhead"><span id="dtitle"></span><span class="x" id="dclose">close ✕</span></div>
+    <div class="drows" id="drows"></div>
+  </div>
+
+  <div class="schema-head">
+    <h2>Underlying schema</h2>
+    <p>Every line in the diagram above is one row here. Use this as the data model for your own mapping — each row ties one ESRS/CSRD module to one connected requirement, with the fields needed to assess obligation and overlap.</p>
+  </div>
+
+  <div class="table-controls">
+    <input type="text" id="search" placeholder="Search module, requirement, authority…">
+    <select id="fJur">
+      <option value="">All jurisdictions</option>
+      <option value="EU">EU-wide</option>
+      <option value="DE">Germany</option>
+      <option value="AT">Austria</option>
+      <option value="CH">Switzerland</option>
+    </select>
+    <select id="fStatus">
+      <option value="">All statuses</option>
+      <option value="mand">Mandatory now</option>
+      <option value="pend">Mandatory / transposing</option>
+      <option value="vol">Voluntary</option>
+    </select>
+  </div>
+
+  <div class="tbl-scroll">
+    <table>
+      <colgroup>
+        <col style="width:110px">
+        <col style="width:190px">
+        <col style="width:110px">
+        <col style="width:70px">
+        <col style="width:90px">
+        <col style="width:220px">
+        <col style="width:230px">
+        <col style="width:170px">
+        <col style="width:190px">
+        <col style="width:100px">
+        <col style="width:280px">
+        <col style="width:200px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th>ESRS module</th>
+          <th>Connected requirement</th>
+          <th>Instrument type</th>
+          <th>Jurisdiction</th>
+          <th>Status</th>
+          <th>Mandatory threshold / trigger</th>
+          <th>Reason for the mandate</th>
+          <th>Submitted to / overseen by</th>
+          <th>Relationship to ESRS</th>
+          <th>Scope relation</th>
+          <th>Shared / ESRS-only / Framework-only (additionality)</th>
+          <th>Scope-comparison source</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <footer class="note">
+    <b>QA pass (global → Germany priority):</b> corrected the Swiss Art. 964a CO headcount threshold (was mis-stated as 250 FTE; actual is 500 FTE), and updated NaBeG (Austria) from "transposing" to "mandatory now" since it was published in BGBl I Nr. 6/2026 on 18 Feb 2026 and took effect the next day. Every requirement name is now a live link to its EUR‑Lex / gesetze‑im‑internet.de / BAFA / RIS / Fedlex / SIX source — click any node or table row to verify directly.<br><br>
+    Scope: Germany, Austria, Switzerland only. CSRD/CSDDD scope, thresholds and timelines are being actively renegotiated under the EU "Omnibus I" simplification (agreed in principle Dec 2025); German, Austrian and Swiss transposition acts were all still moving through their respective legislatures as of mid‑2026. Treat every threshold and date here as a snapshot to verify against BAFA, EFRAG, the Bundestag/Nationalrat, and Swiss Federal Council publications before relying on it for a filing decision. This is a mapping tool, not legal advice.
+  </footer>
+
+</div>
+
+<script>
+const frameworks = {
+  csrd:{name:"CSRD", full:"Corporate Sustainability Reporting Directive (2022/2464/EU)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2464"},
+  csddd:{name:"CSDDD / CS3D", full:"Corporate Sustainability Due Diligence Directive (2024/1760/EU)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024L1760"},
+  taxonomy:{name:"EU Taxonomy", full:"EU Taxonomy Regulation (2020/852) — Art. 8 disclosures", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852"},
+  cbam:{name:"CBAM", full:"Carbon Border Adjustment Mechanism (2023/956/EU)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R0956"},
+  ets:{name:"EU ETS", full:"EU Emissions Trading System (Directive 2003/87/EC)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32003L0087"},
+  eudr:{name:"EUDR", full:"EU Deforestation Regulation (2023/1115)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1115"},
+  battery:{name:"Battery Reg.", full:"EU Battery Regulation (2023/1542)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1542"},
+  paytransparency:{name:"Pay Transparency Dir.", full:"EU Pay Transparency Directive (2023/970)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L0970"},
+  whistleblower:{name:"Whistleblower Dir.", full:"EU Whistleblower Directive (2019/1937)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019L1937"},
+  ied:{name:"IED", full:"EU Industrial Emissions Directive (2010/75/EU, amended by 2024/1785)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32010L0075"},
+  reach:{name:"REACH", full:"REACH Regulation (EC 1907/2006)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32006R1907"},
+  ppwr:{name:"PPWR", full:"EU Packaging & Packaging Waste Regulation (2025/40)", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32025R0040"},
+  sfdr:{name:"SFDR", full:"Sustainable Finance Disclosure Regulation (2019/2088) — Principal Adverse Impact indicators, Annex I", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+  crrpillar3:{name:"CRR Pillar 3 (ESG)", full:"Capital Requirements Regulation (575/2013), Art. 449a — Pillar 3 ESG disclosures for banks", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32013R0575"},
+  benchreg:{name:"EU Benchmark Reg.", full:"Benchmark Regulation (2016/1011) — EU Climate Transition & Paris-aligned Benchmarks, Delegated Regs (EU) 2020/1816 & 2020/1818", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+  climatelaw:{name:"EU Climate Law", full:"European Climate Law (2021/1119) — climate-neutrality objective", j:"EU", rail:"eu",
+    url:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32021R1119"},
+
+  cdp:{name:"CDP", full:"CDP Climate Change questionnaire (global environmental disclosure platform)", j:"GL", rail:"gl",
+    url:"https://www.cdp.net/en/about/framework-alignment"},
+  issbs2:{name:"ISSB / IFRS S2", full:"IFRS S2 Climate-related Disclosures (ISSB)", j:"GL", rail:"gl",
+    url:"https://www.ifrs.org/issued-standards/ifrs-sustainability-standards-navigator/ifrs-s2-climate-related-disclosures/"},
+  gri305:{name:"GRI 305", full:"GRI 305: Emissions 2016 (GRI Standards)", j:"GL", rail:"gl",
+    url:"https://www.globalreporting.org/standards/media/1015/gri-305-emissions-2016.pdf"},
+  sbti:{name:"SBTi", full:"Science Based Targets initiative — Corporate Net-Zero Standard", j:"GL", rail:"gl",
+    url:"https://sciencebasedtargets.org/net-zero"},
+  tnfd:{name:"TNFD", full:"Taskforce on Nature-related Financial Disclosures — recommended disclosures", j:"GL", rail:"gl",
+    url:"https://tnfd.global/"},
+
+  hgb:{name:"CSR-RUG / HGB", full:"HGB §289b–e, 315b–c (CSR‑Richtlinie‑Umsetzungsgesetz)", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/hgb/"},
+  lksg:{name:"LkSG", full:"Act on Corporate Due Diligence Obligations in Supply Chains", j:"DE", rail:"de",
+    url:"https://www.bafa.de/EN/Supply_Chain_Act/Overview/overview_node.html"},
+  ksg:{name:"KSG", full:"Federal Climate Protection Act (Klimaschutzgesetz)", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/ksg/"},
+  bimschg:{name:"BImSchG / PRTR", full:"Federal Immission Control Act & Pollutant Release Register", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/bimschg/"},
+  whg:{name:"WHG", full:"Water Resources Act (Wasserhaushaltsgesetz)", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/whg_2009/"},
+  bnatschg:{name:"BNatSchG", full:"Federal Nature Conservation Act", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/bnatschg_2009/"},
+  verpackg:{name:"VerpackG", full:"Packaging Act (Verpackungsgesetz)", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/verpackg/"},
+  krwg:{name:"KrWG", full:"Circular Economy Act (Kreislaufwirtschaftsgesetz)", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/krwg/"},
+  hinschg:{name:"HinSchG", full:"Whistleblower Protection Act (Hinweisgeberschutzgesetz)", j:"DE", rail:"de",
+    url:"https://www.gesetze-im-internet.de/hinschg/"},
+  dcgk:{name:"DCGK + §289f/315d HGB", full:"German Corporate Governance Code & Corporate Governance Declaration", j:"DE", rail:"de",
+    url:"https://www.dcgk.de/en/home.html"},
+
+  nabeg:{name:"NaBeG (successor to NaDiVeG)", full:"Nachhaltigkeitsberichtsgesetz — Austria's CSRD transposition act", j:"AT", rail:"at",
+    url:"https://www.parlament.gv.at/gegenstand/XXVIII/I/300"},
+  ugb:{name:"UGB", full:"Austrian Commercial Code — corporate governance disclosures", j:"AT", rail:"at",
+    url:"https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10001702"},
+
+  co964:{name:"Art. 964a–c CO", full:"Swiss Code of Obligations — non‑financial reporting", j:"CH", rail:"ch",
+    url:"https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en"},
+  climateord:{name:"Climate Reporting Ord.", full:"Swiss Ordinance on Climate Disclosures (TCFD‑aligned)", j:"CH", rail:"ch",
+    url:"https://www.fedlex.admin.ch/eli/cc/2022/747/de"},
+  co964j:{name:"Art. 964j CO", full:"Swiss CO — conflict minerals & child labour due diligence (+ VSoTr ordinance)", j:"CH", rail:"ch",
+    url:"https://www.fedlex.admin.ch/eli/cc/2021/847/de"},
+  six:{name:"SIX Corp. Gov. Directive", full:"SIX Swiss Exchange Corporate Governance Directive", j:"CH", rail:"ch",
+    url:"https://www.six-group.com/en/products-services/the-swiss-stock-exchange/regulation/rules-regulations/corporate-governance.html"}
+};
+
+const modules = [
+  {id:"esrs2",code:"ESRS 2",name:"General Disclosures",pillar:"Cross-cutting"},
+  {id:"e1",code:"E1",name:"Climate Change",pillar:"Environment"},
+  {id:"e2",code:"E2",name:"Pollution",pillar:"Environment"},
+  {id:"e3",code:"E3",name:"Water & Marine Resources",pillar:"Environment"},
+  {id:"e4",code:"E4",name:"Biodiversity & Ecosystems",pillar:"Environment"},
+  {id:"e5",code:"E5",name:"Resource Use & Circular Economy",pillar:"Environment"},
+  {id:"s1",code:"S1",name:"Own Workforce",pillar:"Social"},
+  {id:"s2",code:"S2",name:"Workers in the Value Chain",pillar:"Social"},
+  {id:"s3",code:"S3",name:"Affected Communities",pillar:"Social"},
+  {id:"s4",code:"S4",name:"Consumers & End-users",pillar:"Social"},
+  {id:"g1",code:"G1",name:"Business Conduct",pillar:"Governance"}
+];
+
+// status: mand | pend | vol
+const rows = [
+{esrs:"esrs2",fw:"csrd",status:"pend",
+  threshold:"Post-Omnibus 'large undertaking': >1,000 employees AND >€50m turnover or >€25m balance sheet (final figures still being reconciled with CSDDD in trilogue).",
+  reason:"Parent EU Directive that made sustainability reporting mandatory and created the ESRS as its technical standard.",
+  submitted:"National company register / officially appointed mechanism (OAM) once transposed; EFRAG sets the standards.",
+  rel:"Legal basis — every ESRS module exists because of this Directive.",
+  scopeRel:"coext", scopeConf:"high",
+  shared:"Everything in ESRS 2 — general disclosures (governance, strategy, IRO process, value chain description) is EFRAG's direct elaboration of what CSRD's amended Accounting Directive articles require at directive level.",
+  esrsOnly:"N/A — CSRD sets the category; ESRS 2 is the complete technical content beneath it.",
+  fwOnly:"N/A by design.",
+  scopeCiteLabel:"CSRD Art. 29b (amended Accounting Directive 2013/34/EU) + ESRS Delegated Regulation (EU) 2023/2772",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2464"},
+{esrs:"esrs2",fw:"hgb",status:"mand",
+  threshold:">500 employees, capital‑market‑oriented, or bank/insurer (legacy NFRD‑era threshold, unchanged while CSRD is un‑transposed).",
+  reason:"Stopgap national law: since Germany missed the July 2024 CSRD transposition deadline, this 2017 NFRD‑era statute remains the only binding non‑financial reporting law in force.",
+  submitted:"Filed with the Bundesanzeiger (Federal Gazette) as part of the Combined Management's Report.",
+  rel:"Current mandatory floor — companies like BASF report against this and layer voluntary ESRS on top.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Description of the business model, policies pursued on the five NFRD-era topics, and outcome of those policies.",
+  esrsOnly:"Double-materiality-driven IRO (impact, risk, opportunity) identification process, value-chain mapping, connectivity with financial statements, mandatory sustainability-statement structure (ESRS 1/2 architecture), digital (XBRL) tagging — HGB §289c requires none of these procedurally.",
+  fwOnly:"None identified — HGB is narrower in process rigor, not broader in topic reach, versus ESRS 2 specifically (unlike its relationship to the E/S/G split, where its single environmental bucket is broader in topic breadth).",
+  scopeCiteLabel:"Own comparative reading of HGB §289c vs. ESRS 2 (Delegated Reg. (EU) 2023/2772) — no official EFRAG/IDW correspondence mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/hgb/__289c.html"},
+{esrs:"esrs2",fw:"nabeg",status:"mand",
+  threshold:"Large public‑interest entities: >1,000 employees AND >€450m revenue (§§243b, 267a UGB). QA update: NaBeG passed the Nationalrat 21 Jan 2026, was published in BGBl I Nr. 6/2026 on 18 Feb 2026, and entered into force the next day — first-wave filers with balance-sheet dates on/after 19 Feb 2026 are now bound, not merely 'pending'.",
+  reason:"Austria's CSRD transposition act, replacing the 2017 NaDiVeG (itself an NFRD implementation); thresholds pre‑aligned to the post‑Omnibus CSRD figures.",
+  submitted:"Austrian Firmenbuch (companies register) / Nationalrat oversight.",
+  rel:"Direct national mirror of ESRS 2 requirements for Austrian filers.",
+  scopeRel:"coext", scopeConf:"high",
+  shared:"Everything — NaBeG adopts the ESRS delegated act wholesale as Austria's technical standard.",
+  esrsOnly:"N/A.", fwOnly:"N/A.",
+  scopeCiteLabel:"NaBeG (BGBl I Nr. 6/2026), amending UGB §§243b, 267a",
+  scopeCiteUrl:"https://www.parlament.gv.at/gegenstand/XXVIII/I/300"},
+{esrs:"esrs2",fw:"co964",status:"mand",
+  threshold:"QA-corrected: ≥500 FTE (annual average, two consecutive years) AND (≥CHF 20m total assets OR ≥CHF 40m revenue, two consecutive years) — public‑interest entities per Art. 964a CO. (An earlier draft of this map understated the headcount test as 250 FTE.)",
+  reason:"Switzerland's own non‑financial reporting statute, enacted independently of the EU but being revised to converge with ESRS.",
+  submitted:"Approved by the board and general meeting; filed for public access per Swiss company law.",
+  rel:"Parallel, non‑EU legal basis — Swiss filers can use ESRS as one of several 'equivalent' standards once the revision is in force.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Business model description, policies and their outcomes across environmental, social, employee, human-rights and anti-corruption matters.",
+  esrsOnly:"Formal double-materiality IRO process, value-chain due-diligence mapping, ESRS 1/2 mandatory architecture, digital tagging, mandatory external assurance.",
+  fwOnly:"None identified beyond the ESRS baseline — a Swiss filer electing full ESRS as its 'recognised standard' would close this gap entirely.",
+  scopeCiteLabel:"Own comparative reading of Art. 964a–c CO vs. ESRS 2 — no official mapping identified",
+  scopeCiteUrl:"https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en"},
+{esrs:"esrs2",fw:"dcgk",status:"vol",
+  threshold:"Comply‑or‑explain; formally applies to listed stock corporations.",
+  reason:"National governance code referenced in the same combined declaration that houses ESRS 2 general disclosures.",
+  submitted:"Published alongside the Combined Declaration of Corporate Governance (§289f/315d HGB).",
+  rel:"Governance-overlay — shares the same disclosure vehicle as ESRS 2 / G1.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Governance-body composition and role in overseeing sustainability matters (both ask who on the board is responsible and how).",
+  esrsOnly:"Double-materiality IRO process, value-chain description, sustainability-specific strategy and business-model disclosures — DCGK doesn't address sustainability substance at all, only governance mechanics.",
+  fwOnly:"Board structure, director independence criteria, remuneration-system design, shareholder-rights provisions — a broader general-governance topic set with no ESRS 2 equivalent (ESRS 2's governance disclosures are scoped specifically to sustainability oversight, not governance generally).",
+  scopeCiteLabel:"Own comparative reading of DCGK vs. ESRS 2 governance disclosures — no official mapping identified (DCGK is a comply-or-explain code, not a numbered standard)",
+  scopeCiteUrl:"https://www.dcgk.de/en/home.html"},
+
+{esrs:"e1",fw:"csrd",status:"pend",
+  threshold:"Post-Omnibus 'large undertaking': >1,000 employees AND >€450m turnover (final figures still being reconciled with CSDDD in trilogue).",
+  reason:"CSRD is the parent Directive; ESRS E1 is EFRAG's technical elaboration of the climate disclosure category CSRD's amended Accounting Directive requires.",
+  submitted:"National company register / OAM once transposed; EFRAG sets the standard.",
+  rel:"Legal basis.",
+  scopeRel:"coext", scopeConf:"high",
+  shared:"Everything — E1 exists specifically to operationalize CSRD's climate-disclosure mandate. There is no CSRD climate content outside what E1 defines.",
+  esrsOnly:"N/A — CSRD sets the category ('climate change mitigation and adaptation') at directive level; all granular detail lives in E1, not in CSRD's own text.",
+  fwOnly:"N/A by design — CSRD delegates all technical content to the ESRS delegated act.",
+  scopeCiteLabel:"CSRD Art. 29b (amended Accounting Directive 2013/34/EU) + ESRS Delegated Regulation (EU) 2023/2772",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2464"},
+
+{esrs:"e1",fw:"hgb",status:"mand",
+  threshold:">500 employees, capital-market-oriented, or bank/insurer.",
+  reason:"HGB §289c requires disclosure on 'environmental matters' as one broad bucket — it does not name climate change as its own category.",
+  submitted:"Filed with the Bundesanzeiger as part of the Combined Management's Report.",
+  rel:"Legacy mandatory floor; broader topic bucket, far shallower climate detail.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Both require some disclosure of climate-relevant environmental risks and measures taken.",
+  esrsOnly:"Granular GHG inventory (Scope 1/2/3 by category), quantified transition plan with decarbonisation levers, EU Taxonomy climate-alignment KPIs, scenario analysis, energy-mix breakdown — none of these are named requirements under HGB §289c.",
+  fwOnly:"Broader topical net: HGB's single 'environmental matters' bucket also sweeps in water, biodiversity, pollution and circularity — everything ESRS splits across E1–E5 — so on pure topic-breadth (not climate-depth) HGB casts a wider, shallower net.",
+  scopeCiteLabel:"Own comparative reading of HGB §289c vs. ESRS E1 (Delegated Reg. (EU) 2023/2772) — no official EFRAG/IDW correspondence mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/hgb/__289c.html"},
+
+{esrs:"e1",fw:"nabeg",status:"mand",
+  threshold:"Large PIEs: >1,000 employees AND >€450m revenue — in force since 19 Feb 2026 (BGBl I Nr. 6/2026).",
+  reason:"NaBeG adopts the ESRS delegated act directly as Austria's technical standard — same relationship as CSRD.",
+  submitted:"Austrian Firmenbuch / Nationalrat oversight.",
+  rel:"Legal basis (national mirror of CSRD).",
+  scopeRel:"coext", scopeConf:"high",
+  shared:"Everything — NaBeG doesn't define its own climate metrics, it adopts ESRS E1 wholesale via UGB §§243b/267a.",
+  esrsOnly:"N/A.", fwOnly:"N/A.",
+  scopeCiteLabel:"NaBeG (BGBl I Nr. 6/2026), amending UGB §§243b, 267a",
+  scopeCiteUrl:"https://www.parlament.gv.at/gegenstand/XXVIII/I/300"},
+
+{esrs:"e1",fw:"co964",status:"mand",
+  threshold:"≥500 FTE (2 consecutive years) AND (≥CHF 20m total assets OR ≥CHF 40m revenue).",
+  reason:"Art. 964b CO requires reporting on 'environmental matters, including CO2 targets' as one line item among several ESG topics — much less granular than E1's dedicated standard.",
+  submitted:"Approved by board and general meeting; filed for public access.",
+  rel:"Parallel non-EU legal basis; narrower minimum, closeable by electing full ESRS.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"CO2 targets, environmental risk description, policies and measures taken.",
+  esrsOnly:"Mandatory Scope 1/2/3 breakdown by category, quantified transition plan, EU Taxonomy climate KPIs, double-materiality-driven risk/opportunity analysis, mandatory external assurance.",
+  fwOnly:"None identified beyond what ESRS already requires — however, a Swiss filer can elect to report under ESRS as its 'recognised standard' (Art. 964a para. 3 CO draft revision), which would make this row co-extensive instead of narrower.",
+  scopeCiteLabel:"Own comparative reading of Art. 964a–c CO vs. ESRS E1 — no official mapping identified; Swiss Federal Council's 2024 draft bill discusses ESRS as one 'equivalent standard' option",
+  scopeCiteUrl:"https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en"},
+
+{esrs:"e1",fw:"ets",status:"mand",
+  threshold:"Installations in covered sectors (incl. chemicals) above activity/capacity thresholds; no company‑size test.",
+  reason:"Carbon pricing scheme that generates the primary verified emissions data ESRS E1 GHG figures are built from.",
+  submitted:"National emissions trading registry / competent authority (in Germany: DEHSt).",
+  rel:"Data source — E1 Scope 1 figures are typically the same verified tonnages reported under ETS.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Verified Scope 1 CO2-equivalent tonnage for covered installations.",
+  esrsOnly:"Scope 2 and Scope 3 emissions, non-ETS-sector emissions, targets, transition plan, financial effects, energy mix, adaptation risk — ETS covers none of this.",
+  fwOnly:"Third-party-verified allowance-surrender-grade data at installation level (auditable to a compliance standard stricter than ESRS's own assurance requirement in early years).",
+  scopeCiteLabel:"EU ETS Directive 2003/87/EC, Annex I (activities covered) — direct statutory scope comparison, not an EFRAG interoperability document",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32003L0087"},
+
+{esrs:"e1",fw:"cbam",status:"mand",
+  threshold:"Importers of iron/steel, cement, aluminium, fertilisers, hydrogen or electricity into the EU — any volume, definitive regime from 2026.",
+  reason:"Prevents carbon leakage by pricing embedded emissions in imports; forces the same emissions‑accounting discipline ESRS E1 requires, but only for a handful of imported goods categories.",
+  submitted:"CBAM declarant portal, overseen by national customs authorities.",
+  rel:"Narrowest E1 connection in this map — a single Scope-3-purchased-goods slice.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Embedded/upstream GHG emissions data for the specific imported goods in CBAM's Annex I.",
+  esrsOnly:"Everything else: Scope 1/2, non-CBAM-good Scope 3 categories, targets, transition plan, adaptation, financial effects.",
+  fwOnly:"Per-consignment, per-import-declaration embedded-emissions accounting — a transaction-level granularity ESRS does not require anywhere in E1.",
+  scopeCiteLabel:"CBAM Regulation (EU) 2023/956, Annex I (goods covered) — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R0956"},
+
+{esrs:"e1",fw:"ksg",status:"mand",
+  threshold:"No company threshold — sets binding national sector carbon budgets (energy, industry, buildings, transport, agriculture) toward 2045 climate neutrality.",
+  reason:"National climate‑neutrality law; provides the policy benchmark against which corporate transition plans are judged.",
+  submitted:"Federal Environment Agency (UBA) monitors and reports to the Bundestag.",
+  rel:"Policy backdrop, not a company disclosure obligation — different unit of analysis entirely.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Topical relevance only — both are about reducing GHG emissions toward net zero.",
+  esrsOnly:"Everything at the entity level: KSG imposes no reporting duty on individual companies at all — it sets national sector-level budgets, not corporate disclosure requirements.",
+  fwOnly:"National carbon-budget monitoring by economic sector, published by UBA — a macro policy-tracking function E1 has no equivalent for.",
+  scopeCiteLabel:"Klimaschutzgesetz (KSG) — flagged as a boundary case: not directly comparable in nested-set terms since KSG is not a corporate reporting law",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/ksg/"},
+
+{esrs:"e1",fw:"climateord",status:"mand",
+  threshold:"Same scope as Art. 964a CO (large PIEs) — climate specifically, TCFD‑aligned.",
+  reason:"Switzerland's climate‑specific carve‑out of its non‑financial reporting law, modelled on TCFD's four pillars (governance, strategy, risk management, metrics & targets).",
+  submitted:"Board‑approved, filed as part of the annual report.",
+  rel:"Structurally similar (TCFD-based) but shallower than E1's ESRS-specific datapoints.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"TCFD's four pillars: governance, strategy, risk management, targets & metrics — the same backbone ISSB IFRS S2 uses, and which EFRAG has assessed as highly compatible with E1's own structure.",
+  esrsOnly:"ESRS-specific datapoints: EU Taxonomy alignment, GHG Protocol-aligned Scope 3 category breakdown, quantified decarbonisation-lever transition plan, double-materiality impact narrative (vs. TCFD/ordinance's single financial-risk lens).",
+  fwOnly:"None identified beyond the TCFD baseline itself.",
+  scopeCiteLabel:"Swiss Ordinance on Climate Disclosures (TCFD-based) vs. ESRS E1 — reasoned from EFRAG's published ESRS 2/E1–IFRS S1&S2 interoperability assessment (TCFD is IFRS S2's own basis); no Switzerland-specific EFRAG mapping found",
+  scopeCiteUrl:"https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/interoperability"},
+
+{esrs:"e1",fw:"taxonomy",status:"mand",
+  threshold:"Same 'large undertaking' scope as CSRD — no separate threshold.",
+  reason:"Requires disclosure of taxonomy‑eligible/aligned revenue, capex and opex tied to the climate mitigation & adaptation objectives — a financial-classification exercise, not an emissions/risk disclosure.",
+  submitted:"Included in the same sustainability statement filed with the national company register.",
+  rel:"Different analytical axis (capital allocation vs. impact/risk) living inside the same chapter.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Both require GHG- and climate-related data, filed in the same sustainability statement.",
+  esrsOnly:"Scope 1/2/3 inventory, targets, transition plan narrative, physical/transition risk scenario analysis, adaptation measures — none of this is a Taxonomy requirement.",
+  fwOnly:"Activity-by-activity technical screening criteria (Do No Significant Harm tests, substantial-contribution thresholds) to classify revenue/capex/opex as taxonomy-aligned — an entirely additional analytical exercise with no ESRS E1 equivalent.",
+  scopeCiteLabel:"EU Taxonomy Regulation (EU) 2020/852, Art. 8 + Commission Delegated Regulation (EU) 2021/2178 (Art. 8 disclosures)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852"},
+
+{esrs:"e1",fw:"cdp",status:"vol",
+  threshold:"Voluntary — driven by investor/customer request via CDP's annual questionnaire; ~23,000+ companies disclosed in 2023.",
+  reason:"CDP and EFRAG jointly published an official correspondence mapping (18 March 2025) confirming high interoperability between the CDP question bank and ESRS E1.",
+  submitted:"CDP disclosure platform (not a regulator).",
+  rel:"Highest-confidence connection in this map — real, dated, jointly-published mapping.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Per the official mapping: transition plans, climate targets, gross Scope 1/2/3 emissions, internal carbon pricing.",
+  esrsOnly:"Mandatory EU Taxonomy alignment figures, ESRS's specific double-materiality IRO narrative structure, mandatory third-party limited assurance under CSRD, ESRS XBRL digital tagging.",
+  fwOnly:"CDP-specific scoring methodology (A–D leadership scoring), detailed supply-chain engagement questions, and cross-links to CDP's own Water Security and Forests questionnaires that go beyond E1's boundary.",
+  scopeCiteLabel:"EFRAG × CDP official correspondence mapping (18 March 2025)",
+  scopeCiteUrl:"https://www.efrag.org/en/news-and-calendar/news/cdp-and-efrag-publish-correspondence-mapping-between-cdp-question-bank-and-european-sustainability"},
+
+{esrs:"e1",fw:"issbs2",status:"vol",
+  threshold:"Voluntary in the EU/DACH (mandatory in ~30 other jurisdictions that have adopted ISSB); no DACH-specific mandate identified.",
+  reason:"EFRAG published a formal interoperability assessment of ESRS 2/E1 against IFRS S1 & S2 (Aug 2023), concluding a company applying ESRS substantially satisfies IFRS S2's climate-related financial disclosures.",
+  submitted:"Not a regulator — IFRS Foundation standard; individual jurisdictions decide whether to mandate it.",
+  rel:"Effectively nested — ESRS's financial-materiality slice was designed to satisfy IFRS S2.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Governance, strategy, risk management, and metrics & targets (TCFD's four pillars); financial-materiality climate risks and opportunities.",
+  esrsOnly:"Impact materiality (ESRS's double-materiality 'impact' side has no IFRS S2 equivalent, since IFRS S2 is investor-focused/single-materiality only), EU Taxonomy alignment, mandatory Scope 3 in all cases (IFRS S2 allows more proportionality relief).",
+  fwOnly:"SASB industry-based metrics cross-referenced by IFRS S2 for sector-specific comparability — ESRS doesn't mandate the identical industry-metric set.",
+  scopeCiteLabel:"EFRAG interoperability assessment: ESRS 2/E1 vs. IFRS S1 & S2 (SRB meeting, 23 Aug 2023)",
+  scopeCiteUrl:"https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/interoperability"},
+
+{esrs:"e1",fw:"gri305",status:"vol",
+  threshold:"Voluntary — GRI is a 'report with reference to' standard, not a mandate; widely used as a supplementary or bridging framework.",
+  reason:"EFRAG and GRI jointly published a GRI–ESRS Interoperability Index (final Nov 2024) mapping GRI Standards disclosures to corresponding ESRS disclosure requirements at datapoint level.",
+  submitted:"Not a regulator — GRI Standards, self-reported 'in accordance with' or 'with reference to'.",
+  rel:"High documented overlap; GRI is impact-materiality-only where ESRS is double-materiality.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Direct/indirect (Scope 1/2) GHG emissions, emissions intensity, reduction initiatives — per the official Interoperability Index.",
+  esrsOnly:"Financial-materiality content (climate-related financial risks/opportunities, EU Taxonomy alignment) — GRI 305 is an impact-only standard with no financial-risk lens.",
+  fwOnly:"GRI 305-6/305-7 style ozone-depleting-substance and NOx/SOx/other significant air-emissions indicators are reported as a companion GRI 305 sub-disclosure — ESRS places the closest equivalent under E2 (Pollution), not E1, so GRI's E1-adjacent numbering doesn't map 1:1 onto ESRS's module boundaries.",
+  scopeCiteLabel:"GRI–ESRS Interoperability Index, final version (Nov 2024)",
+  scopeCiteUrl:"https://www.globalreporting.org/media/qzmoeixv/esrs-gri-interoperability-index-november-2024.pdf"},
+
+{esrs:"e1",fw:"sbti",status:"vol",
+  threshold:"Voluntary — company opts in to have its targets validated against SBTi's sector-specific 1.5°C pathway methodology.",
+  reason:"SBTi is a target-validation scheme, not a disclosure standard — it covers only the 'targets' slice of E1 (ESRS E1-4), in depth, with independent scientific validation ESRS itself does not perform.",
+  submitted:"Science Based Targets initiative (independent nonprofit validator, not a regulator).",
+  rel:"Narrowest, deepest connection: a single ESRS E1 datapoint area, third-party-validated.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Near-term and net-zero GHG reduction target-setting, base-year selection, target boundary (Scope 1/2/3).",
+  esrsOnly:"Everything outside target-setting: GHG inventory disclosure itself, transition-plan narrative, financial effects, adaptation, EU Taxonomy alignment, risk/opportunity analysis.",
+  fwOnly:"Independent third-party scientific validation that a target is consistent with a 1.5°C pathway using sector-specific decarbonisation methodology — ESRS requires disclosure of targets and the methodology used, but does not itself validate scientific rigor the way SBTi's review process does.",
+  scopeCiteLabel:"SBTi Corporate Net-Zero Standard — reasoned comparison; no official EFRAG–SBTi interoperability mapping identified as of this review",
+  scopeCiteUrl:"https://sciencebasedtargets.org/net-zero"},
+
+{esrs:"e2",fw:"ied",status:"mand",
+  threshold:"Installations exceeding activity‑specific capacity thresholds (chemical production is explicitly covered) — permit‑based, not company‑size based.",
+  reason:"Sets binding emission limit values and Best Available Techniques (BAT) conclusions for industrial installations.",
+  submitted:"State environmental permitting authority (Land‑level in Germany).",
+  rel:"Data source — permit compliance data feeds E2 pollution figures and targets.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Pollutant-specific emission-limit-value compliance data for permitted installations (air, water, soil pollutants covered by the permit).",
+  esrsOnly:"Non-permitted-site pollution, product-related pollution (e.g. substances of concern in products sold), microplastics, targets and policies narrative, financial effects of pollution-related risks.",
+  fwOnly:"Legally binding numeric emission limit values and BAT-conclusion compliance deadlines enforced site-by-site — a permit-compliance grade of specificity ESRS E2 doesn't itself set.",
+  scopeCiteLabel:"IED (2010/75/EU) Annex I activity list — direct statutory scope comparison, not an EFRAG interoperability document",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32010L0075"},
+{esrs:"e2",fw:"reach",status:"mand",
+  threshold:"Manufacturers/importers of substances ≥1 tonne/year placed on the EU market.",
+  reason:"Chemicals registration, evaluation, authorisation and restriction regime — core to a chemical company's licence to operate.",
+  submitted:"European Chemicals Agency (ECHA).",
+  rel:"Substance‑level data source underpinning E2 chemicals/pollution disclosures.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Identity and hazard classification of substances manufactured/imported/used, and restrictions on substances of very high concern.",
+  esrsOnly:"E2's own required datapoint set: use and release of microplastics, substances of concern generated/used/sourced/sold, pollution of soil, and financial-effects/target narrative — REACH's registration dossiers don't map directly onto these ESRS datapoints.",
+  fwOnly:"Legally mandated registration dossiers and authorisation applications for specific substances — a chemical-safety-dossier regime with no ESRS equivalent.",
+  scopeCiteLabel:"REACH Regulation (EC) 1907/2006 — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32006R1907"},
+{esrs:"e2",fw:"bimschg",status:"mand",
+  threshold:"Installations requiring a federal immission‑control permit; pollutant thresholds trigger PRTR reporting.",
+  reason:"German transposition of IED plus the pollutant release and transfer register obligation.",
+  submitted:"State environmental authority; PRTR data feeds the European Pollutant Release and Transfer Register.",
+  rel:"Site‑level pollutant data source for E2.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Same as the IED row above — BImSchG is Germany's transposition of IED, so the scope logic is identical.",
+  esrsOnly:"Same gaps as the IED row: non-permitted-site and product-related pollution, targets/policy narrative.",
+  fwOnly:"PRTR public-register reporting of pollutant releases/transfers by facility, feeding the EU-wide E-PRTR register — a specific public-registry mechanism ESRS doesn't replicate.",
+  scopeCiteLabel:"BImSchG (national IED transposition) — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/bimschg/"},
+
+{esrs:"e3",fw:"whg",status:"mand",
+  threshold:"Water abstraction/discharge permits — facility‑level, no company‑size test.",
+  reason:"National transposition of the EU Water Framework Directive; governs abstraction and discharge permits.",
+  submitted:"State water authority.",
+  rel:"Permit data source for E3 water consumption/discharge metrics.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Water withdrawal and discharge volumes at permitted sites, and compliance with discharge quality limits.",
+  esrsOnly:"Water in areas of high water stress, water intensity ratios tied to net revenue, targets/policies narrative, financial effects of water-related risks and opportunities — WHG's permits don't require this ESRS-specific framing.",
+  fwOnly:"Legally binding abstraction/discharge permit conditions enforceable site-by-site under German water law.",
+  scopeCiteLabel:"WHG (national Water Framework Directive transposition) — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/whg_2009/"},
+{esrs:"e3",fw:"ied",status:"mand",
+  threshold:"Same installations as above where water discharge is part of the permit.",
+  reason:"Industrial discharge limit values are set jointly with air‑emission limits under the same permit.",
+  submitted:"State environmental permitting authority.",
+  rel:"Shares permitting infrastructure with E2/E3.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Permitted discharge volumes and quality limits for covered installations.",
+  esrsOnly:"Water-stress-area exposure, intensity ratios, targets/policy narrative, financial effects — same category of gap as the WHG row.",
+  fwOnly:"Same as the E2/IED row — binding numeric limit values under a single cross-media permit.",
+  scopeCiteLabel:"IED (2010/75/EU) — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32010L0075"},
+
+{esrs:"e4",fw:"eudr",status:"mand",
+  threshold:"Operators/traders placing cattle, cocoa, coffee, palm oil, rubber, soy or wood products on the EU market — large operators from Dec 2025, SMEs from mid‑2026.",
+  reason:"Bans EU‑market placement of commodities linked to deforestation after Dec 31, 2020.",
+  submitted:"EU Information System (due‑diligence statements), checked by national competent authorities.",
+  rel:"Direct data source for E4 biodiversity/land‑use impacts on relevant input commodities.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Deforestation/land-use-change status of the specific commodities in EUDR's Annex I, traced to plot-level geolocation.",
+  esrsOnly:"Biodiversity impacts from any other operation or commodity outside EUDR's seven-commodity list, ecosystem condition metrics, species-level impacts, transition plans for biodiversity, financial effects of nature-related risk.",
+  fwOnly:"Plot-level satellite-verified geolocation due-diligence statements per shipment — a traceability granularity with no ESRS E4 equivalent.",
+  scopeCiteLabel:"EUDR (EU) 2023/1115, Art. 2 & Annex I (commodities covered) — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1115"},
+{esrs:"e4",fw:"bnatschg",status:"mand",
+  threshold:"Site‑ and project‑level (impact‑assessment triggers), not a company‑size threshold.",
+  reason:"National nature‑conservation law governing habitat and species protection at operating sites.",
+  submitted:"State nature conservation authority.",
+  rel:"Site‑level ecological baseline data for E4.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Habitat/species impact assessment obligations at permitted operating sites.",
+  esrsOnly:"Value-chain (upstream/downstream) biodiversity impacts, biodiversity transition plans, financial-effects narrative, ESRS's specific impact-driver metrics (e.g. land-use change area, water use in biodiversity-sensitive areas).",
+  fwOnly:"Legally binding site-level impact-assessment and mitigation-hierarchy permit conditions enforceable under German nature-conservation law.",
+  scopeCiteLabel:"BNatSchG — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/bnatschg_2009/"},
+{esrs:"e4",fw:"taxonomy",status:"mand",
+  threshold:"Same scope as CSRD.",
+  reason:"Biodiversity & ecosystems is one of six environmental objectives requiring aligned‑activity disclosure.",
+  submitted:"Filed with the sustainability statement.",
+  rel:"KPI overlay inside E4.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Both require identification of biodiversity-relevant activities and their financial significance.",
+  esrsOnly:"Impact-materiality biodiversity metrics (species, ecosystem condition, land-use change), transition plans, dependencies analysis — Taxonomy doesn't require these at all.",
+  fwOnly:"Activity-by-activity technical screening criteria and Do No Significant Harm tests to classify revenue/capex/opex as taxonomy-aligned for the biodiversity objective — an additional financial-classification exercise ESRS E4 doesn't itself require.",
+  scopeCiteLabel:"EU Taxonomy Regulation (EU) 2020/852, Art. 8 (biodiversity & ecosystems objective)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852"},
+{esrs:"e4",fw:"tnfd",status:"vol",
+  threshold:"Voluntary — company opts in to TNFD's LEAP (Locate, Evaluate, Assess, Prepare) nature-risk assessment approach.",
+  reason:"EFRAG and TNFD signed an MoU (Dec 2023) and jointly published a correspondence mapping between ESRS and TNFD's recommended disclosures and metrics, confirming a high degree of commonality.",
+  submitted:"Not a regulator — TNFD is a market-led taskforce; disclosure is via a company's own reporting channels.",
+  rel:"Highest-confidence global-voluntary connection for E4 — a real, jointly-published mapping exists, mirroring the CDP↔E1 relationship.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Per the official mapping: governance, strategy, risk-management structure (aligned to TCFD's four pillars applied to nature) and core nature-related metrics.",
+  esrsOnly:"ESRS's own impact-driver metric set (e.g. land-use change area in hectares, water use in biodiversity-sensitive areas) and its double-materiality-specific narrative structure.",
+  fwOnly:"TNFD's LEAP methodology for locating and assessing nature-related dependencies and impacts across a value chain, plus its dependency-focused metrics (e.g. ecosystem service dependencies) — a systematic risk-assessment process with no direct ESRS E4 equivalent.",
+  scopeCiteLabel:"EFRAG × TNFD correspondence mapping (per EFRAG-TNFD MoU, Dec 2023)",
+  scopeCiteUrl:"https://www.efrag.org/en/sustainability-reporting/esrs-workstreams/interoperability"},
+
+{esrs:"e5",fw:"battery",status:"mand",
+  threshold:"Economic operators placing batteries on the EU market; carbon‑footprint and due‑diligence duties scale with battery category/capacity.",
+  reason:"Mandates recycled‑content, carbon‑footprint declarations and raw‑material due diligence across the battery life cycle.",
+  submitted:"EU Battery due‑diligence and carbon‑footprint databases; market surveillance authorities.",
+  rel:"Product‑level circularity data source for E5 (and raw‑material due diligence for S2).",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Recycled-content share and carbon-footprint data for batteries specifically.",
+  esrsOnly:"E5's full resource-inflow/outflow disclosure across all products and materials (not just batteries), waste generated, resource-use targets and policies, financial effects of resource dependency.",
+  fwOnly:"Product-specific carbon-footprint declaration format and recycled-content minimums enforced per battery category — a product-passport-level granularity ESRS E5 doesn't itself mandate.",
+  scopeCiteLabel:"EU Battery Regulation (EU) 2023/1542 — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1542"},
+{esrs:"e5",fw:"verpackg",status:"mand",
+  threshold:"Any business placing packaging on the German market — registration (LUCID) required regardless of size.",
+  reason:"Extended producer responsibility for packaging; funds collection/recycling systems.",
+  submitted:"Zentrale Stelle Verpackungsregister (Central Packaging Register), LUCID portal.",
+  rel:"Packaging‑waste data source for E5.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Packaging volumes placed on the German market and their recycling-system contribution.",
+  esrsOnly:"Non-packaging resource inflows/outflows, product circularity design, waste from operations, resource-use targets narrative.",
+  fwOnly:"Mandatory LUCID registration and licence-fee payment into a collection system, enforced per packaging unit — an operational compliance mechanism with no ESRS E5 equivalent.",
+  scopeCiteLabel:"VerpackG — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/verpackg/"},
+{esrs:"e5",fw:"ppwr",status:"pend",
+  threshold:"Applies to all packaging placed on the EU market; recyclability/reuse targets phase in 2026–2030.",
+  reason:"EU‑wide regulation replacing the old Packaging Directive, tightening recyclability and reuse targets.",
+  submitted:"National market‑surveillance authorities once transposed as directly‑applicable Regulation.",
+  rel:"Forward‑looking target set that E5 circularity KPIs will need to track.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Packaging recyclability and reuse-rate targets.",
+  esrsOnly:"Same broader resource-flow disclosure gap as VerpackG above, for all non-packaging materials.",
+  fwOnly:"EU-wide binding recyclability/reuse design criteria and minimum-recycled-content mandates by packaging category, phased 2026–2030 — a product-design regulation, not a disclosure standard.",
+  scopeCiteLabel:"PPWR (EU) 2025/40 — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32025R0040"},
+{esrs:"e5",fw:"krwg",status:"mand",
+  threshold:"Waste‑hierarchy and producer‑responsibility duties apply to waste generators generally; specific thresholds by waste stream.",
+  reason:"German transposition of the EU Waste Framework Directive.",
+  submitted:"State waste authority.",
+  rel:"Waste‑stream data source for E5 resource‑use metrics.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Waste generated by type, and waste-hierarchy (prevent/reuse/recycle/dispose) compliance.",
+  esrsOnly:"Resource inflows (materials used), circularity of products/materials sold, resource-use targets and financial-effects narrative — KrWG regulates waste output, not full material-flow disclosure.",
+  fwOnly:"Legally binding waste-hierarchy compliance and producer-responsibility obligations enforceable by German waste authorities.",
+  scopeCiteLabel:"KrWG (national Waste Framework Directive transposition) — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/krwg/"},
+
+{esrs:"s1",fw:"paytransparency",status:"pend",
+  threshold:"Staggered by headcount: 250+ employees report annually, first report due 7 June 2027 (using 2026 data); 150–249 report every 3 years, first due 7 June 2027; 100–149 report every 3 years, first due 7 June 2031. Hiring‑transparency duties (pay range in job ads, no salary‑history questions) apply to all employers regardless of size.",
+  reason:"Closes the EU gender pay gap through pay‑range disclosure and mandatory gap reporting; a 5%+ unexplained gap triggers a joint pay assessment.",
+  submitted:"National labour authority / equality body once transposed — most member states, including Germany, missed the 7 June 2026 transposition deadline.",
+  rel:"Direct KPI overlap with ESRS S1 remuneration and gender‑pay‑gap disclosures.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Gender pay gap percentage, remuneration-range disclosure by category.",
+  esrsOnly:"S1's full workforce-characteristics set: headcount by contract type/gender/region, collective bargaining coverage, training hours, work-related injuries, adequate wages, and the double-materiality narrative tying these to strategy.",
+  fwOnly:"Joint pay assessment obligation triggered automatically at a 5%+ unexplained gap, and hiring-stage transparency duties (pay range in every job ad, ban on salary-history questions) — process-level mechanics ESRS S1 doesn't itself mandate.",
+  scopeCiteLabel:"Pay Transparency Directive (EU) 2023/970 — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L0970"},
+{esrs:"s1",fw:"lksg",status:"mand",
+  threshold:">1,000 employees in Germany (stepped down from 3,000 in 2023 to 1,000 from Jan 2024).",
+  reason:"Human‑rights and environmental due diligence obligation covering a company's own operations as well as its supply chain.",
+  submitted:"Federal Office for Economic Affairs and Export Control (BAFA).",
+  rel:"Own‑workforce risk data (grievance mechanisms, working conditions) feeds S1.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Own-workforce human-rights risk identification (forced labour, discrimination, occupational safety) and grievance-mechanism access.",
+  esrsOnly:"S1's full quantitative workforce dataset — headcount, turnover, collective bargaining coverage, pay metrics, training, injury rates — LkSG requires a risk-management process, not this specific KPI set.",
+  fwOnly:"A formalised, BAFA-auditable due-diligence process (risk analysis, preventive/remedial measures, complaints procedure) with statutory documentation requirements — a process mandate rather than a disclosure standard.",
+  scopeCiteLabel:"LkSG — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.bafa.de/EN/Supply_Chain_Act/Overview/overview_node.html"},
+{esrs:"s2",fw:"lksg",status:"mand",
+  threshold:">1,000 employees in Germany.",
+  reason:"Core purpose of the Act — extending due diligence to direct and (risk‑based) indirect suppliers.",
+  submitted:"BAFA; annual due‑diligence report (reporting duty itself is being eased/removed under a 2025 amendment).",
+  rel:"Primary German data source for S2 value‑chain worker risks.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Supply-chain human-rights risk identification and grievance-mechanism access for value-chain workers.",
+  esrsOnly:"S2's full impact-materiality dataset on value-chain working conditions (child labour, forced labour, adequate wages, working-time) framed through ESRS's IRO structure and connected to strategy/business model.",
+  fwOnly:"A BAFA-auditable, risk-tiered due-diligence process reaching direct and (risk-triggered) indirect suppliers, with statutory documentation and potential fines for non-compliance.",
+  scopeCiteLabel:"LkSG — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.bafa.de/EN/Supply_Chain_Act/Overview/overview_node.html"},
+{esrs:"s2",fw:"csddd",status:"pend",
+  threshold:"Post‑Omnibus proposal: ~5,000 employees and €1.5bn+ net worldwide turnover (down‑scoped from the original text; still in trilogue as of early 2026).",
+  reason:"EU‑wide due‑diligence obligation across the value chain for human rights and environmental impacts, with civil liability.",
+  submitted:"National supervisory authority designated by each member state; EU Commission for very large companies.",
+  rel:"Will become the EU‑wide legal basis underpinning S2/S3 due‑diligence disclosures once transposed, effectively superseding LkSG for in‑scope companies.",
+  scopeRel:"broader", scopeConf:"moderate",
+  shared:"Value-chain human-rights and environmental due diligence, risk identification, and remediation processes.",
+  esrsOnly:"S2's specific quantitative disclosure datapoints and double-materiality IRO narrative structure — CSDDD mandates the due-diligence process itself, and leaves the disclosure format to CSRD/ESRS.",
+  fwOnly:"Civil liability regime (a company can be sued for damages from due-diligence failures), climate transition-plan implementation obligation tied to remuneration, and EU-wide harmonised enforcement with penalties up to 5% of net worldwide turnover — a legal-liability layer with no ESRS equivalent.",
+  scopeCiteLabel:"CSDDD (EU) 2024/1760 — provisional post-Omnibus text under trilogue; treat threshold as unsettled",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024L1760"},
+{esrs:"s2",fw:"battery",status:"mand",
+  threshold:"Same scope as the Battery Regulation's carbon‑footprint duty.",
+  reason:"Requires due diligence on cobalt, lithium, nickel and natural graphite sourcing.",
+  submitted:"EU Battery due‑diligence database; market surveillance authorities.",
+  rel:"Raw‑material‑specific supply‑chain data feeding S2.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Supply-chain due-diligence findings for the four named battery raw materials.",
+  esrsOnly:"S2's coverage of all value-chain workers across all materials/products, not just battery raw materials.",
+  fwOnly:"A specific, OECD-aligned due-diligence policy filed for the four named minerals with independent third-party verification — a narrow but formally verified sub-process.",
+  scopeCiteLabel:"EU Battery Regulation (EU) 2023/1542, Art. 48 (due diligence) — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1542"},
+{esrs:"s2",fw:"co964j",status:"mand",
+  threshold:"Companies placing conflict minerals/metals into free circulation in Switzerland, or with reasonable suspicion of child labour in their supply chain — no size threshold.",
+  reason:"Swiss due‑diligence duty on conflict minerals and child labour, modelled on the EU Conflict Minerals Regulation and OECD guidance.",
+  submitted:"Filed as part of the annual report; enforcement via ordinary company‑law liability.",
+  rel:"Swiss equivalent of LkSG's supply‑chain due‑diligence data for S2.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Conflict-minerals and child-labour risk identification in the supply chain.",
+  esrsOnly:"S2's full value-chain-worker impact set beyond these two specific risk categories, and its double-materiality narrative.",
+  fwOnly:"A narrowly targeted due-diligence and reporting duty specifically for conflict minerals/metals and child labour, with no broader value-chain-worker scope.",
+  scopeCiteLabel:"Swiss CO Art. 964j + VSoTr ordinance — direct statutory scope comparison, no official mapping identified",
+  scopeCiteUrl:"https://www.fedlex.admin.ch/eli/cc/2021/847/de"},
+
+{esrs:"s3",fw:"csddd",status:"pend",
+  threshold:"Same post‑Omnibus threshold as above.",
+  reason:"Due‑diligence duty explicitly extends to communities affected by a company's operations and value chain, not just workers.",
+  submitted:"National supervisory authority / EU Commission.",
+  rel:"Legal basis for community‑impact assessment feeding S3.",
+  scopeRel:"broader", scopeConf:"moderate",
+  shared:"Community-impact identification, engagement, and remediation processes.",
+  esrsOnly:"S3's specific quantitative/qualitative disclosure datapoints and double-materiality narrative — CSDDD mandates the process, ESRS/CSRD mandates the disclosure format.",
+  fwOnly:"Civil liability for damages caused to affected communities, and EU-wide harmonised enforcement — a legal-liability layer with no ESRS equivalent.",
+  scopeCiteLabel:"CSDDD (EU) 2024/1760 — provisional post-Omnibus text under trilogue",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024L1760"},
+{esrs:"s3",fw:"eudr",status:"mand",
+  threshold:"Same commodity‑operator scope as under E4.",
+  reason:"Deforestation‑linked land‑rights violations frequently implicate indigenous and local communities.",
+  submitted:"EU Information System / national competent authorities.",
+  rel:"Land‑rights and community‑impact data overlapping E4 and S3.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Land-rights and free-prior-informed-consent compliance for the seven named commodities.",
+  esrsOnly:"S3's full affected-communities impact set beyond land rights tied to these specific commodities (e.g. community health, cultural heritage, resource access more broadly).",
+  fwOnly:"Plot-level legality verification (compliance with local land-tenure law) as a market-access precondition — a narrow but strictly enforced compliance gate.",
+  scopeCiteLabel:"EUDR (EU) 2023/1115, Art. 3 (legality requirement) — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1115"},
+{esrs:"s3",fw:"lksg",status:"mand",
+  threshold:">1,000 employees in Germany.",
+  reason:"Environmental risks in the supply chain (e.g. pollution, land/water use) are assessed for their impact on local communities.",
+  submitted:"BAFA.",
+  rel:"Secondary data source — community‑level environmental impact evidence.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Identification of environmental risks in the supply chain that harm local communities (e.g. land, water).",
+  esrsOnly:"S3's full affected-communities framework including social/economic/cultural impacts unrelated to environmental risk, and its double-materiality narrative.",
+  fwOnly:"A BAFA-auditable due-diligence process specifically for environment-mediated human-rights risks in the supply chain.",
+  scopeCiteLabel:"LkSG — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.bafa.de/EN/Supply_Chain_Act/Overview/overview_node.html"},
+
+{esrs:"g1",fw:"whistleblower",status:"mand",
+  threshold:"Employers with 50+ employees must operate an internal reporting channel (thresholds phased by size since Dec 2021/2023).",
+  reason:"Protects individuals reporting breaches of EU law, including environmental and human‑rights breaches.",
+  submitted:"Internal channel plus external channel to the competent national authority.",
+  rel:"Grievance‑mechanism data source for ESRS G1 and S1–S3.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Existence and functioning of internal/external whistleblowing channels and non-retaliation protections.",
+  esrsOnly:"G1's full business-conduct dataset: anti-corruption policies and training, political engagement/lobbying activities, supplier payment practices, management of relationships with suppliers — the Directive covers only the reporting-channel mechanism.",
+  fwOnly:"Legally mandated channel design specifications (confidentiality safeguards, response deadlines, follow-up procedures) enforceable per member state.",
+  scopeCiteLabel:"EU Whistleblower Directive (EU) 2019/1937 — direct statutory scope comparison",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019L1937"},
+{esrs:"g1",fw:"hinschg",status:"mand",
+  threshold:"50+ employees (staggered: 250+ from July 2023, 50–249 from Dec 2023).",
+  reason:"German transposition of the EU Whistleblower Directive.",
+  submitted:"Federal Office of Justice (external reporting office) or internal channel.",
+  rel:"National implementation feeding the same G1 grievance disclosures.",
+  scopeRel:"narrower", scopeConf:"high",
+  shared:"Same as the Whistleblower Directive row — HinSchG is Germany's transposition, so the scope logic is identical.",
+  esrsOnly:"Same gap as above: anti-corruption policy content, lobbying disclosure, supplier-relationship management.",
+  fwOnly:"German-specific channel-operation rules and the Federal Office of Justice's external reporting office as an enforcement backstop.",
+  scopeCiteLabel:"HinSchG — direct statutory scope comparison",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/hinschg/"},
+{esrs:"g1",fw:"lksg",status:"mand",
+  threshold:">1,000 employees in Germany.",
+  reason:"Requires a complaints procedure accessible to affected persons and whistleblowers along the supply chain.",
+  submitted:"BAFA.",
+  rel:"Supply‑chain grievance data source for G1.",
+  scopeRel:"narrower", scopeConf:"moderate",
+  shared:"Existence of a complaints procedure accessible to supply-chain-affected persons.",
+  esrsOnly:"G1's anti-corruption, lobbying, and supplier-payment-practice disclosures — LkSG's complaints mechanism is scoped only to supply-chain human-rights/environmental grievances.",
+  fwOnly:"A BAFA-auditable complaints procedure specifically reaching supply-chain-affected third parties, not just internal/external whistleblowers.",
+  scopeCiteLabel:"LkSG — direct statutory scope comparison, no official EFRAG mapping identified",
+  scopeCiteUrl:"https://www.bafa.de/EN/Supply_Chain_Act/Overview/overview_node.html"},
+{esrs:"g1",fw:"dcgk",status:"vol",
+  threshold:"Comply‑or‑explain; applies to listed stock corporations.",
+  reason:"Sets governance, anti‑corruption and board‑conduct expectations referenced by G1's business‑conduct disclosures.",
+  submitted:"Published in the Combined Declaration of Corporate Governance.",
+  rel:"Governance‑culture context for G1.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Board-level responsibility for anti-corruption culture and business-conduct oversight.",
+  esrsOnly:"G1's specific quantitative business-conduct metrics: confirmed corruption incidents, political contributions by amount, payment practices to suppliers (average payment time, % paid within terms).",
+  fwOnly:"Broader board-structure, remuneration, and shareholder-rights provisions with no ESRS G1 equivalent (same broader-general-governance point as the ESRS 2/DCGK row).",
+  scopeCiteLabel:"DCGK vs. ESRS G1 — own comparative reading, no official mapping identified",
+  scopeCiteUrl:"https://www.dcgk.de/en/home.html"},
+{esrs:"g1",fw:"csddd",status:"pend",
+  threshold:"Same post‑Omnibus threshold as S2/S3.",
+  reason:"Requires board‑level oversight and integration of due diligence into corporate governance.",
+  submitted:"National supervisory authority.",
+  rel:"Will formalise the governance mechanics G1 currently describes voluntarily/via HGB.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Board-level accountability for due-diligence oversight and its integration into corporate strategy.",
+  esrsOnly:"G1's anti-corruption/lobbying/supplier-payment metrics — CSDDD's governance requirement is about due-diligence oversight specifically, not general business-conduct disclosure.",
+  fwOnly:"Mandatory linkage of variable director remuneration to climate transition-plan implementation, and civil liability for governance failures — mechanisms with no ESRS G1 equivalent.",
+  scopeCiteLabel:"CSDDD (EU) 2024/1760 — provisional post-Omnibus text under trilogue",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024L1760"},
+{esrs:"g1",fw:"ugb",status:"mand",
+  threshold:"Listed/large Austrian companies.",
+  reason:"National corporate‑governance disclosure duty running alongside NaBeG.",
+  submitted:"Austrian Firmenbuch.",
+  rel:"Austrian governance‑disclosure counterpart to G1.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Governance-body composition and oversight-role disclosures.",
+  esrsOnly:"G1's sustainability-specific business-conduct metrics (corruption incidents, lobbying, supplier payment practices).",
+  fwOnly:"General Austrian corporate-governance disclosure requirements (board structure, capital-market compliance) with no direct ESRS G1 equivalent.",
+  scopeCiteLabel:"UGB corporate governance provisions — own comparative reading, no official mapping identified",
+  scopeCiteUrl:"https://www.ris.bka.gv.at/GeltendeFassung.wxe?Abfrage=Bundesnormen&Gesetzesnummer=10001702"},
+{esrs:"g1",fw:"six",status:"mand",
+  threshold:"Companies listed on SIX Swiss Exchange.",
+  reason:"Exchange‑level governance disclosure requirement for listed issuers.",
+  submitted:"SIX Exchange Regulation.",
+  rel:"Listing‑rule counterpart to G1 for Swiss‑listed filers.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Governance-body composition, and disclosure of significant business-conduct policies to investors.",
+  esrsOnly:"G1's sustainability-specific business-conduct metrics with no listing-rule equivalent.",
+  fwOnly:"Exchange-enforced listing-rule governance disclosures (management structure, compensation, shareholder participation rights) applicable regardless of sustainability materiality.",
+  scopeCiteLabel:"SIX Corporate Governance Directive — own comparative reading, no official mapping identified",
+  scopeCiteUrl:"https://www.six-group.com/en/products-services/the-swiss-stock-exchange/regulation/rules-regulations/corporate-governance.html"},
+
+// ---------- ESRS 2, Appendix A: datapoints deriving from other EU legislation ----------
+// SFDR, CRR Pillar 3, the EU Benchmark Regulation and the European Climate Law are not reporting
+// regimes for the ESRS-preparer itself — they are the *reason* certain individual ESRS datapoints
+// are tagged/machine-readable: financial-market participants, banks and benchmark administrators
+// pull this exact data out of the sustainability statement to feed their own EU-mandated disclosures.
+{esrs:"esrs2",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — SFDR binds the financial-market participants (asset managers, insurers, pension funds) who invest in it; they need this data for their own Art. 4 Principal Adverse Impact (PAI) reporting.",
+  reason:"EFRAG deliberately tagged specific ESRS 2 datapoints (due-diligence statement, fossil-fuel/chemicals/controversial-weapons/tobacco involvement, human-rights policy) to the exact SFDR Annex I PAI indicator they satisfy, so investee disclosure feeds investor disclosure without a separate data request.",
+  submitted:"Financial-market participants file PAI statements under SFDR Art. 4; the source data sits in the undertaking's own ESRS 2 sustainability statement.",
+  rel:"Upstream data source, not a parallel filing — a small, explicitly tagged subset of ESRS 2's datapoints double as SFDR PAI inputs.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"GOV-3 due-diligence statement (PAI indicator 10), SBM-1 involvement in fossil-fuel, chemicals, controversial-weapons and tobacco activities (PAI indicators 4, 9, 14 and Delegated Reg. 2020/1818 Art. 12(1)), and GDR-P human-rights-policy commitments (PAI indicators 9 and 11).",
+  esrsOnly:"ESRS 2's full governance, strategy and IRO-process narrative — SFDR only needs the handful of tagged PAI datapoints, not the whole general-disclosures chapter.",
+  fwOnly:"SFDR's own product-level Art. 8/9 disclosure regime and the aggregation of PAI indicators into pre-contractual and periodic fund documents — a financial-product disclosure exercise with no ESRS 2 equivalent.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"esrs2",fw:"crrpillar3",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — CRR Art. 449a binds large listed credit institutions, who need borrower-level exposure data for their own Pillar 3 ESG disclosure templates.",
+  reason:"SBM-1's fossil-fuel-activity involvement datapoint is tagged to Art. 449a/435 CRR and to the banking-book climate-risk templates in Commission Implementing Regulation (EU) 2024/3172, so a bank's counterparties disclose the exposure data the bank itself must aggregate.",
+  submitted:"Banks file Pillar 3 ESG disclosure templates with their prudential supervisor; the underlying counterparty data originates in the counterparty's ESRS 2 sustainability statement.",
+  rel:"Upstream data source for banking-sector prudential disclosure — one SBM-1 datapoint, not the whole chapter.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"SBM-1 involvement in fossil-fuel-related activities, cross-referenced to CRR Art. 449a/435 and to Implementing Reg. (EU) 2024/3172 Templates 1–2 (credit quality of exposures by sector/emissions; qualitative environmental and social risk).",
+  esrsOnly:"Everything in ESRS 2 outside the single fossil-fuel-exposure datapoint.",
+  fwOnly:"The bank's own Pillar 3 templates — portfolio-level alignment metrics, exposure aggregation by sector and residual maturity — a prudential-disclosure exercise performed by the bank, not the counterparty.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Pillar 3 column)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32013R0575"},
+{esrs:"esrs2",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — the Benchmark Regulation binds administrators of EU Climate Transition and Paris-aligned Benchmarks, who need constituent-company ESG data to build and disclose the benchmark methodology.",
+  reason:"GOV-1 board independence, SBM-1 fossil-fuel/chemicals/controversial-weapons/tobacco involvement, and GDR-P human-rights-policy datapoints are each tagged to Delegated Reg. (EU) 2020/1818 Art. 12(1) and/or the ESG-factor-statement requirements of Delegated Reg. (EU) 2020/1816 Annex II.",
+  submitted:"Benchmark administrators publish the ESG-factor statement and climate-benchmark methodology; constituent-company data comes from each company's own ESRS 2 statement.",
+  rel:"Upstream data source for benchmark construction and index-provider ESG-factor disclosure.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"GOV-1 board-independence percentage, SBM-1 fossil-fuel/chemicals/controversial-weapons/tobacco involvement, and GDR-P human-rights-policy commitments, each mapped to a specific Annex II ESG-factor line or Art. 12(1) exclusion criterion.",
+  esrsOnly:"ESRS 2's full governance and strategy narrative outside the tagged exclusion/ESG-factor datapoints.",
+  fwOnly:"The benchmark administrator's own index-construction methodology, exclusion-criteria application and ESG-factor-statement publication — an index-provider exercise, not a company disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Tables 1–2 (Benchmark Regulation column)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+{esrs:"e1",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"E1-7's energy-consumption-by-source datapoint (high-climate-impact sectors) and energy-mix disclosure are tagged to SFDR PAI indicators 5 in Tables 1 and 2 of Annex I.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source — energy-mix datapoints feed SFDR's fossil-fuel-share and energy-consumption-intensity PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E1-7 energy consumption from fossil sources disaggregated by source (high-climate-impact sectors) and overall energy consumption and mix, tagged to PAI Annex I indicator 5.",
+  esrsOnly:"E1's transition-plan narrative, targets, decarbonisation levers and Scope 1–3 GHG figures outside the specific energy-mix datapoint.",
+  fwOnly:"SFDR's product-level aggregation of the energy-intensity PAI indicator across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, E1-7)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"e1",fw:"crrpillar3",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Pillar 3 row.",
+  reason:"E1-6 GHG-reduction targets, E1-8 gross Scope 1/2/3 emissions, and E1-11's real-estate energy-efficiency and physical-risk-location datapoints are each cross-referenced to Art. 449a CRR and to specific templates in Implementing Reg. (EU) 2024/3172 (banking-book transition-risk alignment metrics, credit-quality-by-sector/emissions, and collateral energy-efficiency/physical-risk templates).",
+  submitted:"Banks aggregate this counterparty and collateral data into their own Pillar 3 climate-risk templates filed with their prudential supervisor.",
+  rel:"Upstream data source for bank credit-risk and collateral-risk disclosure — several distinct E1 datapoints, not the whole chapter.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E1-6 GHG-reduction targets, E1-8 gross Scope 1/2/3 emissions, E1-11 real-estate energy-efficiency breakdown and location of assets at physical risk — each mapped to a named Pillar 3 template.",
+  esrsOnly:"E1's transition-plan narrative and qualitative decarbonisation strategy outside the templated quantitative datapoints.",
+  fwOnly:"The bank's own portfolio-level Pillar 3 alignment metrics, credit-quality-by-sector tables and collateral energy-efficiency templates — bank-side aggregation, not company disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Tables 1–2 (Pillar 3 column, E1-6/E1-8/E1-11)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32013R0575"},
+{esrs:"e1",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Benchmark Regulation row.",
+  reason:"E1-6 GHG-reduction targets and E1-11's climate-related physical-risk and opportunity exposure are tagged to Delegated Reg. (EU) 2020/1818 Art. 6 and Annex II, which set the decarbonisation-trajectory and exposure metrics a Climate Transition or Paris-aligned Benchmark must apply to constituent companies.",
+  submitted:"Benchmark administrators use this data to compute and publish the benchmark's decarbonisation trajectory and climate-risk exposure statistics.",
+  rel:"Upstream data source for climate-benchmark construction.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E1-6 GHG-reduction targets (decarbonisation-trajectory input) and E1-11 exposure to climate-related physical risks and opportunities.",
+  esrsOnly:"E1's full transition-plan narrative and Scope 1–3 emissions inventory outside the two tagged datapoints.",
+  fwOnly:"The benchmark's own year-on-year decarbonisation-trajectory calculation and index-weighting methodology.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Benchmark Regulation column, E1-6/E1-11)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+{esrs:"e1",fw:"climatelaw",status:"mand",
+  threshold:"Applies as an EU-wide, economy-level objective (climate neutrality by 2050) rather than a company-level threshold — it doesn't trigger a company filing of its own.",
+  reason:"E1-1's transition-plan datapoint and E1-9's GHG-removals/carbon-credits datapoint are both cross-referenced to Article 2(1) of the European Climate Law, which sets the Union's binding climate-neutrality objective that company transition plans are expected to align with.",
+  submitted:"No separate company filing — the Climate Law binds the EU and Member States collectively; company transition plans disclosed under E1-1 are the mechanism by which corporate ambition is checked against the Article 2(1) trajectory.",
+  rel:"Policy-alignment anchor — E1-1 and E1-9 reference the Climate Law's neutrality objective as the benchmark a credible transition plan should be consistent with.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E1-1 transition plan for climate-change mitigation and E1-9 GHG removals and carbon credits, both referenced to Climate Law Art. 2(1)'s climate-neutrality objective.",
+  esrsOnly:"E1's company-specific decarbonisation levers, targets, capex/opex alignment and removals accounting methodology — the Climate Law sets no company-level datapoints itself.",
+  fwOnly:"The EU-level and Member-State-level carbon-budget and policy mechanisms (Article 4 EU-wide 2040/2050 trajectory, Article 3 scientific advisory board) that operate above and independently of any single company's disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (EU Climate Law column, E1-1/E1-9)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32021R1119"},
+{esrs:"e2",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"E2-4's material-pollutants-to-air/water/soil datapoint is tagged to PAI indicators 1, 2, 3 (Table 2) and 8 (Table 1) of Annex I.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source — E2-4's pollutant-tonnage figures feed SFDR's emissions-to-water/air/soil PAI indicators directly.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E2-4 amount of material pollutants emitted to air, water and soil, tagged to four separate PAI Annex I indicators.",
+  esrsOnly:"E2's pollution-prevention policies, targets and site-level narrative outside the tagged tonnage datapoint.",
+  fwOnly:"SFDR's product-level aggregation of the pollution PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, E2-4)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"e3",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"E3-1's water-policy and water-stress-area-policy datapoints and E3-4's water-recycled/reused datapoint are each tagged to PAI indicators 6.2, 7 and 8 of Annex I Table 2.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's water-management PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E3-1 water-related policies and policy coverage of water-stressed areas, and E3-4 total water recycled and reused.",
+  esrsOnly:"E3's full water-consumption/withdrawal inventory, targets and marine-resource narrative outside the tagged policy/recycling datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the water PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, E3-1/E3-4)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"e4",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"E4-5's biodiversity-sensitive-areas datapoint and E4-2's policy-coverage-of-sensitive-sites datapoint are tagged to PAI indicators 7 (Table 1) and 14.2 (Table 2) of Annex I.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's biodiversity PAI indicator.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E4-5 activities negatively affecting biodiversity-sensitive areas and E4-2 policy covering sites in or near such areas.",
+  esrsOnly:"E4's full dependency/impact assessment, targets and transition-plan narrative outside the two tagged datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the biodiversity PAI indicator across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, E4-5/E4-2)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"e5",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"E5-5's non-recycled-waste and hazardous/radioactive-waste datapoints are tagged to PAI indicators 13 (Table 2) and 9 (Table 1) of Annex I.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's waste PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"E5-5 non-recycled waste, and hazardous and radioactive waste.",
+  esrsOnly:"E5's resource-inflow/outflow inventory, circularity targets and product-design narrative outside the two tagged waste datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the waste PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, E5-5)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"s1",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"Several S1 datapoints are tagged to PAI Annex I indicators: S1-1 anti-trafficking processes (indicator 11, Table 3), S1-2 grievance mechanism (indicator 5, Table 3 and indicator 11, Table 1), S1-13 health-and-safety management system, accident rate and lost days (indicators 1–3, Table 3), S1-15 unadjusted gender pay gap and remuneration ratio (indicator 12, Table 1 and indicator 8, Table 3), and S1-16 discrimination incidents and human-rights incidents (indicator 7, Table 3 and indicator 10, Table 1).",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source — S1's social/workforce datapoints are the single largest tagged block feeding SFDR's social PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Anti-trafficking processes, grievance mechanisms, health-and-safety management/accidents/lost-days, gender pay gap and remuneration ratio, and discrimination/human-rights incidents.",
+  esrsOnly:"S1's full workforce-characteristics, collective-bargaining-coverage and working-conditions narrative outside the tagged PAI datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the social PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, S1-1/S1-2/S1-13/S1-15/S1-16)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"s1",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Benchmark Regulation row.",
+  reason:"S1-13's accident-rate datapoint, S1-15's gender-pay-gap datapoint, and S1-16's human-rights-incidents datapoint are each tagged to the Social factor requirements of Delegated Reg. (EU) 2020/1816 Annex II, which benchmark administrators must state as ESG factors used in their methodology.",
+  submitted:"Benchmark administrators publish these as ESG-factor statements alongside the benchmark methodology.",
+  rel:"Upstream data source for benchmark ESG-factor disclosure.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"S1-13 rate of work-related accidents, S1-15 unadjusted gender pay gap, and S1-16 human-rights incidents.",
+  esrsOnly:"S1's full workforce narrative outside the three tagged datapoints.",
+  fwOnly:"The benchmark administrator's own ESG-factor-statement drafting and methodology disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Benchmark Regulation column, S1-13/S1-15/S1-16)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+{esrs:"s2",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"S2-1's anti-trafficking-processes and code-of-conduct datapoints are tagged to PAI indicators 11 and 4 (Table 3) of Annex I; S2-3's human-rights-incidents datapoint (labelled S2-3 in the ESRS 2 Appendix, though addressed under the S3-2/S3-3 grievance and incident disclosures for other stakeholder groups) is tagged to indicators 10 (Table 1) and 14 (Table 3).",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's value-chain-worker PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Processes for preventing trafficking in human beings, code of conduct, and human-rights incidents affecting workers in the value chain.",
+  esrsOnly:"S2's full value-chain-worker engagement, remediation and channel-effectiveness narrative outside the tagged datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the value-chain-worker PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, S2-1/S2-3)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"s2",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Benchmark Regulation row.",
+  reason:"The value-chain-worker human-rights-incidents datapoint is tagged to the Social factor requirements of Delegated Reg. (EU) 2020/1816 Annex II.",
+  submitted:"Benchmark administrators publish this as part of their ESG-factor statement.",
+  rel:"Upstream data source for benchmark ESG-factor disclosure.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Human-rights incidents affecting workers in the value chain.",
+  esrsOnly:"S2's full value-chain-worker narrative outside the tagged incidents datapoint.",
+  fwOnly:"The benchmark administrator's own ESG-factor-statement drafting and methodology disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Benchmark Regulation column, S2-3)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+{esrs:"s3",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"The affected-communities grievance-mechanism datapoint is tagged to PAI indicator 11 (Table 1), and the human-rights-incidents datapoint to indicators 10 (Table 1) and 14 (Table 3) of Annex I — the same pairing applied across S2, S3 and S4 for their respective stakeholder groups.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's community-impact PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Grievance mechanism for affected communities, and human-rights incidents involving affected communities.",
+  esrsOnly:"S3's full community-engagement, impact-assessment and remediation narrative outside the tagged datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the community-impact PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, S3-2/S3-3)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"s3",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Benchmark Regulation row.",
+  reason:"The affected-communities human-rights-incidents datapoint is tagged to the Social factor requirements of Delegated Reg. (EU) 2020/1816 Annex II.",
+  submitted:"Benchmark administrators publish this as part of their ESG-factor statement.",
+  rel:"Upstream data source for benchmark ESG-factor disclosure.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Human-rights incidents involving affected communities.",
+  esrsOnly:"S3's full community narrative outside the tagged incidents datapoint.",
+  fwOnly:"The benchmark administrator's own ESG-factor-statement drafting and methodology disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Benchmark Regulation column, S3-3)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+{esrs:"g1",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"G1-1's anti-corruption-policy and whistleblower-protection datapoints, G1-2's anti-corruption-breach-response datapoint, and G1-4's convictions-and-fines datapoint are each tagged to PAI indicators 15, 6, 16 and 17 (Table 3) of Annex I.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's anti-corruption PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Anti-corruption policy alignment with the UN Convention against Corruption, whistleblower protection, breach-response actions, and convictions/fines for anti-corruption and anti-bribery violations.",
+  esrsOnly:"G1's supplier-payment-practices, lobbying and political-contribution narrative outside the four tagged datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the anti-corruption PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, G1-1/G1-2/G1-4)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"g1",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Benchmark Regulation row.",
+  reason:"G1-4's convictions-and-fines datapoint is tagged to Delegated Reg. (EU) 2020/1816 Annex II.",
+  submitted:"Benchmark administrators publish this as part of their ESG-factor statement.",
+  rel:"Upstream data source for benchmark ESG-factor disclosure.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Convictions and fines for violation of anti-corruption and anti-bribery laws.",
+  esrsOnly:"G1's full business-conduct narrative outside the tagged datapoint.",
+  fwOnly:"The benchmark administrator's own ESG-factor-statement drafting and methodology disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Benchmark Regulation column, G1-4)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+
+// ---------- ESRS S4 (Consumers & End-users) — full applicability audit against every existing framework node ----------
+// S4 covers three sub-topics: information-related impacts on consumers/end-users (privacy, freedom of
+// expression), personal safety of consumers/end-users (health & safety, security, protection of children),
+// and social inclusion of consumers/end-users (non-discrimination, access to products/services, responsible
+// marketing). Every framework node already on this diagram was checked against those three sub-topics.
+// INCLUDED below (confirmed textual/legal hook, sourced): SFDR & Benchmark Reg. (per ESRS 2 Appendix A,
+// same S4-2/S4-3 pairing used for S2/S3); EU Whistleblower Directive + its German transposition HinSchG
+// (Art. 2(1)(a) + Annex Part I of Dir. 2019/1937 lists "consumer protection" and "product safety and
+// compliance" as protected material-scope areas — a report about a consumer-protection-law breach is
+// whistleblower-protected, which overlaps S4's grievance-channel datapoints); REACH Art. 33 (the
+// "consumer right to know" — suppliers must disclose SVHCs in articles to consumers on request, a direct
+// information-related-impact hook); EU Battery Regulation (Arts. 13-14/77 — mandatory end-user-facing
+// safety, hazardous-substance and proper-disposal labelling); PPWR (Art. 12 — harmonised consumer-facing
+// sorting/material-composition labelling). CSRD, HGB, NaBeG and Art. 964a-c CO attach automatically below
+// via the umbrella mechanism, as they do for every other module.
+// CHECKED AND EXCLUDED (no direct S4 hook found): CSDDD — its "chain of activities" was deliberately
+// narrowed in the final text to exclude product use and disposal by consumers entirely (confirmed across
+// multiple post-adoption legal analyses of Directive (EU) 2024/1760, e.g. Akin Gump, White & Case, HFW);
+// LkSG — BAFA's protected legal positions cover only employees/workers in the supply chain, not end
+// consumers of the product; EU Taxonomy — its Minimum Safeguards (Art. 18) reference OECD MNE Guidelines/
+// UNGPs on human rights, labour and anti-corruption, not a consumer-protection hook specific enough to tag
+// an S4 datapoint; Pay Transparency Directive — employee pay only; DCGK, UGB, SIX — general corporate-
+// governance/listing disclosures with no consumer-facing content; VerpackG — producer-registration/take-
+// back obligations (LUCID), not a direct consumer-information mandate comparable to PPWR's; ETS, CBAM,
+// EUDR, IED, WHG, BNatSchG, KrWG, BImSchG, KSG, co964j, Climate Reporting Ord. — environmental-compliance
+// or supply-chain instruments with no consumer/end-user disclosure content; CRR Pillar 3 — Art. 449a's
+// ESG templates are scoped to climate-related financial risk, not conduct/consumer-protection risk;
+// EU Climate Law — an economy-wide neutrality objective, no consumer datapoint; CDP, ISSB/IFRS S2,
+// GRI 305, SBTi, TNFD — each scoped to climate, emissions or nature, not consumers.
+{esrs:"s4",fw:"sfdr",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/SFDR row.",
+  reason:"S4-2's grievance-mechanism datapoint and S4-3's human-rights-incidents datapoint are tagged to PAI indicators 11 (Table 1) and 10 (Table 1) + 14 (Table 3) of Annex I — the same pairing ESRS 2 Appendix A applies to S2 and S3 for their respective stakeholder groups, extended here to consumers and end-users.",
+  submitted:"Same PAI-reporting channel as the ESRS 2/SFDR row.",
+  rel:"Upstream data source for SFDR's consumer-facing human-rights PAI indicators.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Grievance mechanism for consumers/end-users, and human-rights incidents involving consumers/end-users.",
+  esrsOnly:"S4's full consumer-safety, information-access and non-discrimination narrative outside the two tagged datapoints.",
+  fwOnly:"SFDR's product-level aggregation of the PAI indicators across a fund's holdings.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (SFDR column, S4-2/S4-3)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019R2088"},
+{esrs:"s4",fw:"benchreg",status:"mand",
+  threshold:"Not a threshold on the ESRS preparer — see the ESRS 2/Benchmark Regulation row.",
+  reason:"S4-3's human-rights-incidents datapoint is tagged to the Social factor requirements of Delegated Reg. (EU) 2020/1816 Annex II, mirroring the same row already made for S2 and S3.",
+  submitted:"Benchmark administrators publish this as part of their ESG-factor statement.",
+  rel:"Upstream data source for benchmark ESG-factor disclosure.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Human-rights incidents involving consumers/end-users.",
+  esrsOnly:"S4's full consumer narrative outside the tagged incidents datapoint.",
+  fwOnly:"The benchmark administrator's own ESG-factor-statement drafting and methodology disclosure.",
+  scopeCiteLabel:"ESRS 2, Appendix A, Table 1 (Benchmark Regulation column, S4-3)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32016R1011"},
+{esrs:"s4",fw:"whistleblower",status:"mand",
+  threshold:"Applies to legal entities with 50+ workers (public/private), which must maintain internal reporting channels — a lower threshold than CSRD, so most ESRS filers are already in scope on their own account.",
+  reason:"Article 2(1)(a) and Annex Part I of the Whistleblower Directive (2019/1937) list 'product safety and compliance' and 'consumer protection' among the protected material-scope areas — a report about a consumer-protection or product-safety breach is a protected disclosure under the same channel S4's grievance-mechanism datapoint describes.",
+  submitted:"Internal reporting channel (Arts. 8-9) or the competent national external-reporting authority.",
+  rel:"Structural overlap — the whistleblowing channel S4-2 must describe as accessible to consumers/end-users is, for EU entities, the same legally mandated channel this Directive requires for consumer-protection and product-safety reports.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Existence and accessibility of a reporting/grievance channel covering, among other things, consumer-protection and product-safety concerns.",
+  esrsOnly:"S4's substantive consumer-safety, information and non-discrimination outcomes — the Directive protects the reporter, it doesn't require the underlying consumer-protection performance data S4 does.",
+  fwOnly:"Legal protections against retaliation for the reporting person (confidentiality, burden-of-proof reversal, remedies) — a whistleblower-protection mechanism with no ESRS S4 equivalent.",
+  scopeCiteLabel:"Directive (EU) 2019/1937, Art. 2(1)(a) and Annex, Part I (consumer protection; product safety and compliance)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32019L1937"},
+{esrs:"s4",fw:"hinschg",status:"mand",
+  threshold:"German employers with 50+ employees must operate an internal reporting office (§12 HinSchG); public-interest entities regardless of size.",
+  reason:"HinSchG is Germany's transposition of the EU Whistleblower Directive and carries over the same material scope, including reports relating to consumer-protection and product-safety law (§2 HinSchG, cross-referencing the Directive's Annex).",
+  submitted:"Internal reporting office (interne Meldestelle) or the Federal Office of Justice (Bundesamt für Justiz) as external authority.",
+  rel:"National-law counterpart to the EU Whistleblower Directive row above, for German-domiciled filers.",
+  scopeRel:"partial", scopeConf:"moderate",
+  shared:"Same reporting-channel overlap as the EU Whistleblower Directive row, implemented at German national level.",
+  esrsOnly:"S4's substantive consumer-outcome datapoints — HinSchG protects the reporter, not the underlying performance data.",
+  fwOnly:"German-specific procedural detail (Bundesamt für Justiz as external body, national penalty regime for retaliation) not itself an ESRS S4 datapoint.",
+  scopeCiteLabel:"HinSchG (Hinweisgeberschutzgesetz), §2 in conjunction with the Annex of Directive (EU) 2019/1937",
+  scopeCiteUrl:"https://www.gesetze-im-internet.de/hinschg/"},
+{esrs:"s4",fw:"reach",status:"mand",
+  threshold:"Applies to any supplier of an article placed on the EU market containing a Candidate List SVHC above 0.1% w/w — no company-size threshold, so it binds product-level, not entity-level.",
+  reason:"REACH Article 33(2) creates the 'consumer right to know': on request, any supplier must tell a consumer, within 45 days and free of charge, whether an article contains an SVHC above the threshold and how to use it safely — a direct legal hook for S4's information-related and personal-safety impact sub-topics.",
+  submitted:"Response provided directly to the requesting consumer; SVHC content is also submitted to ECHA's SCIP database under the Waste Framework Directive.",
+  rel:"Product-level information-duty counterpart to S4's disclosure on managing information-related and safety impacts on consumers.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Consumer-facing chemical-safety information duty covering the same 'can the end-user use this safely, and do they know what's in it' question S4 addresses at policy/process level.",
+  esrsOnly:"S4's process-level policy narrative, targets, and broader safety/inclusion/marketing datapoints — REACH Art. 33 covers only SVHC-content disclosure, not the full consumer-safety picture.",
+  fwOnly:"The specific 45-day response deadline, the 0.1% w/w threshold and the SCIP-database submission mechanics — a chemicals-regulation compliance duty with no ESRS S4 equivalent.",
+  scopeCiteLabel:"REACH Regulation (EC) 1907/2006, Art. 33(2) — consumer right to know",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32006R1907"},
+{esrs:"s4",fw:"battery",status:"mand",
+  threshold:"Applies to any battery (and battery-containing product) placed on the EU market from the Regulation's phased application dates (2024-2027), regardless of the seller's size.",
+  reason:"Articles 13, 14 and 77 of the Battery Regulation mandate end-user-facing labelling covering safety risks, hazardous-substance content, capacity/lifetime performance and correct disposal — squarely a personal-safety and information-related impact on end-users within S4's scope.",
+  submitted:"Labelling and QR-code/digital-passport information accompanies the product to the point of sale and is checked by market-surveillance authorities.",
+  rel:"Product-level safety/information-disclosure counterpart to S4 for battery-containing products specifically.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Mandatory end-user safety and hazardous-substance information at point of sale — the same personal-safety information S4 requires the undertaking to manage as an impact.",
+  esrsOnly:"S4's policy, target and broader non-discrimination/marketing narrative — the Battery Regulation only mandates the label content, not a management-approach disclosure.",
+  fwOnly:"The battery passport, CE-marking conformity-assessment procedure and take-back/deposit mechanics — product-compliance machinery with no ESRS S4 equivalent.",
+  scopeCiteLabel:"Battery Regulation (EU) 2023/1542, Arts. 13-14 (labelling) and 77 (battery passport information)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023R1542"},
+{esrs:"s4",fw:"ppwr",status:"pend",
+  threshold:"Applies from 12 August 2026 (general date of application) to all packaging placed on the EU market, regardless of the seller's size.",
+  reason:"Article 12 of the PPWR mandates harmonised, consumer-facing labelling on material composition and sorting instructions, plus QR-code access to reuse/collection-point information — an information-related impact on end-users squarely within S4's scope.",
+  submitted:"Labelling accompanies the packaging to point of sale; digital labels (QR codes) are checked by market-surveillance authorities.",
+  rel:"Product-level consumer-information counterpart to S4 for packaging specifically, alongside the pollution/circularity rows this framework already has elsewhere in the diagram.",
+  scopeRel:"partial", scopeConf:"high",
+  shared:"Mandatory consumer-facing sorting and material-composition information — the same 'does the end-user have what they need to use/dispose of this responsibly' question S4 addresses at policy level.",
+  esrsOnly:"S4's policy, target and broader safety/non-discrimination narrative — PPWR only mandates the label content.",
+  fwOnly:"Recyclability-class design criteria (A-D) and minimum-recycled-content mandates — a product-design regulation with no ESRS S4 equivalent.",
+  scopeCiteLabel:"PPWR, Regulation (EU) 2025/40, Art. 12 (labelling of packaging)",
+  scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32025R0040"}
+];
+
+// ---------- QA fix: umbrella legal-basis instruments must attach to EVERY module ----------
+// CSRD, HGB/CSR-RUG, NaBeG and Swiss Art.964a-c CO are the parent laws that make the
+// WHOLE sustainability statement mandatory - not just the ESRS 2 general-disclosures chapter.
+// They were incorrectly scoped to esrs2 only. This block adds the missing rows for E1-G1.
+const umbrellaMeta = {
+  csrd: {
+    status:"pend",
+    threshold:"Post-Omnibus 'large undertaking': >1,000 employees AND >€450m turnover (final figures still being reconciled with CSDDD in trilogue).",
+    reason:"CSRD is the parent EU Directive — it is what makes preparing this specific ESRS module mandatory in the first place, exactly as it does for every other module. It is not limited to the ESRS 2 general-disclosures chapter.",
+    submitted:"National company register / officially appointed mechanism (OAM) once transposed; EFRAG sets the underlying standards.",
+    scopeRel:"coext", scopeConf:"high",
+    shared:(code)=>`Everything in ${code} — the module is EFRAG's technical elaboration of the disclosure category CSRD's amended Accounting Directive requires. There is no CSRD content for this topic outside what ${code} defines.`,
+    esrsOnly:()=>`N/A — CSRD sets the category at directive level; all granular detail lives in the ESRS module, not in CSRD's own text.`,
+    fwOnly:()=>`N/A by design — CSRD delegates all technical content to the ESRS delegated act.`,
+    scopeCiteLabel:"CSRD Art. 29b (amended Accounting Directive 2013/34/EU) + ESRS Delegated Regulation (EU) 2023/2772",
+    scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32022L2464"
+  },
+  hgb: {
+    status:"mand",
+    threshold:">500 employees, capital-market-oriented, or bank/insurer (legacy NFRD-era threshold, unchanged while CSRD remains un-transposed in Germany).",
+    reason:"HGB §289c requires a non-financial statement covering environmental, employee, social, human-rights and anti-corruption matters — the same topic set ESRS splits across E1–G1 — even though the HGB text doesn't reference ESRS modules by name. This is the mandatory floor BASF-style filers report against while layering full ESRS on top voluntarily.",
+    submitted:"Filed with the Bundesanzeiger as part of the Combined Management's Report.",
+    scopeRel:"narrower", scopeConf:"moderate",
+    shared:(code)=>`Topic-level relevance — HGB's relevant NFRD-era bucket touches the same subject matter as ${code}, and requires disclosure of policies pursued and their outcomes.`,
+    esrsOnly:(code)=>`${code}'s specific datapoints, double-materiality IRO process, value-chain mapping, and mandatory external assurance — HGB §289c requires none of these procedurally, only a general narrative.`,
+    fwOnly:()=>`None specific to this module beyond HGB's characteristically broader, shallower topic bucket (see the ESRS 2 row for the full topic-breadth argument).`,
+    scopeCiteLabel:"Own comparative reading of HGB §289c vs. the relevant ESRS module — no official EFRAG/IDW correspondence mapping identified",
+    scopeCiteUrl:"https://www.gesetze-im-internet.de/hgb/__289c.html"
+  },
+  nabeg: {
+    status:"mand",
+    threshold:"Large PIEs: >1,000 employees AND >€450m revenue — in force since 19 Feb 2026 (BGBl I Nr. 6/2026).",
+    reason:"Austria's CSRD transposition act. Like CSRD itself, it mandates the full ESRS sustainability statement — every module — not only general disclosures.",
+    submitted:"Austrian Firmenbuch (companies register) / Nationalrat oversight.",
+    scopeRel:"coext", scopeConf:"high",
+    shared:(code)=>`Everything — NaBeG adopts the ESRS delegated act wholesale, so ${code} applies to Austrian filers exactly as written by EFRAG.`,
+    esrsOnly:()=>"N/A.", fwOnly:()=>"N/A.",
+    scopeCiteLabel:"NaBeG (BGBl I Nr. 6/2026), amending UGB §§243b, 267a",
+    scopeCiteUrl:"https://www.parlament.gv.at/gegenstand/XXVIII/I/300"
+  },
+  co964: {
+    status:"mand",
+    threshold:"≥500 FTE (2 consecutive years) AND (≥CHF 20m total assets OR ≥CHF 40m revenue) — large Swiss public-interest entities.",
+    reason:"Swiss Art. 964b CO requires reporting across environmental (incl. CO2 targets), social, employee, human-rights and anti-corruption matters — the same topic set ESRS splits across E1–G1, just not broken into named modules.",
+    submitted:"Approved by the board and general meeting; filed for public access per Swiss company law.",
+    scopeRel:"narrower", scopeConf:"moderate",
+    shared:(code)=>`Topic-level relevance and outcome-of-policy disclosure overlapping with ${code}.`,
+    esrsOnly:(code)=>`${code}'s specific datapoints, formal double-materiality IRO process, value-chain due-diligence mapping, and ESRS's mandatory architecture and external assurance.`,
+    fwOnly:()=>`None identified beyond the ESRS baseline — a Swiss filer electing full ESRS as its 'recognised standard' would close this gap.`,
+    scopeCiteLabel:"Own comparative reading of Art. 964a–c CO vs. the relevant ESRS module — no official mapping identified",
+    scopeCiteUrl:"https://www.fedlex.admin.ch/eli/cc/27/317_321_377/en"
+  }
+};
+const umbrellaFrameworkIds = Object.keys(umbrellaMeta);
+const modulesNeedingUmbrella = modules.map(m=>m.id).filter(id=>id!=="esrs2" && id!=="e1"); // esrs2 and e1 already have explicit, scope-annotated rows above
+modulesNeedingUmbrella.forEach(modId=>{
+  const modMeta = modules.find(m=>m.id===modId);
+  umbrellaFrameworkIds.forEach(fwId=>{
+    const meta = umbrellaMeta[fwId];
+    rows.push({
+      esrs: modId, fw: fwId, status: meta.status,
+      threshold: meta.threshold, reason: meta.reason, submitted: meta.submitted,
+      rel: `Legal basis — ${modMeta.code} is one of the disclosure requirements this instrument makes mandatory (see also the ESRS 2 row for this same framework, which is the general-disclosures anchor).`,
+      scopeRel: meta.scopeRel, scopeConf: meta.scopeConf,
+      shared: meta.shared(modMeta.code), esrsOnly: meta.esrsOnly(modMeta.code), fwOnly: meta.fwOnly(modMeta.code),
+      scopeCiteLabel: meta.scopeCiteLabel, scopeCiteUrl: meta.scopeCiteUrl
+    });
+  });
+});
+
+// EU Taxonomy covers all six environmental objectives (climate mitigation, climate adaptation,
+// water & marine resources, transition to circular economy, pollution prevention, biodiversity) —
+// it was wired to E1 and E4 only and missing from E2 (pollution), E3 (water), E5 (circular economy).
+rows.push(
+  {esrs:"e2",fw:"taxonomy",status:"mand",
+    threshold:"Same 'large undertaking' scope as CSRD — no separate threshold.",
+    reason:"'Pollution prevention and control' is one of the six Taxonomy environmental objectives; taxonomy-aligned capex/opex tied to pollution abatement is disclosed here.",
+    submitted:"Included in the same sustainability statement filed with the national company register.",
+    rel:"Quantitative overlay — taxonomy KPIs for the pollution objective sit inside the E2 chapter.",
+    scopeRel:"partial", scopeConf:"high",
+    shared:"Identification of pollution-relevant activities and their financial significance.",
+    esrsOnly:"Impact-materiality pollution metrics (substances of concern, microplastics, soil pollution) and targets narrative — Taxonomy doesn't require these.",
+    fwOnly:"Activity-by-activity technical screening criteria and Do No Significant Harm tests for the pollution-prevention objective — an additional financial-classification exercise.",
+    scopeCiteLabel:"EU Taxonomy Regulation (EU) 2020/852, Art. 8 (pollution prevention objective)",
+    scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852"},
+  {esrs:"e3",fw:"taxonomy",status:"mand",
+    threshold:"Same 'large undertaking' scope as CSRD — no separate threshold.",
+    reason:"'Sustainable use and protection of water and marine resources' is one of the six Taxonomy environmental objectives.",
+    submitted:"Included in the same sustainability statement filed with the national company register.",
+    rel:"Quantitative overlay — taxonomy KPIs for the water objective sit inside the E3 chapter.",
+    scopeRel:"partial", scopeConf:"high",
+    shared:"Identification of water-relevant activities and their financial significance.",
+    esrsOnly:"Impact-materiality water metrics (withdrawal/consumption in water-stressed areas, intensity ratios) and targets narrative.",
+    fwOnly:"Activity-by-activity technical screening criteria for the water objective — an additional financial-classification exercise.",
+    scopeCiteLabel:"EU Taxonomy Regulation (EU) 2020/852, Art. 8 (water & marine resources objective)",
+    scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852"},
+  {esrs:"e5",fw:"taxonomy",status:"mand",
+    threshold:"Same 'large undertaking' scope as CSRD — no separate threshold.",
+    reason:"'Transition to a circular economy' is one of the six Taxonomy environmental objectives; taxonomy-aligned revenue/capex tied to circularity is disclosed here.",
+    submitted:"Included in the same sustainability statement filed with the national company register.",
+    rel:"Quantitative overlay — taxonomy KPIs for the circular-economy objective sit inside the E5 chapter.",
+    scopeRel:"partial", scopeConf:"high",
+    shared:"Identification of circular-economy-relevant activities and their financial significance.",
+    esrsOnly:"Impact-materiality resource-flow metrics (inflows, outflows, waste generated) and targets narrative.",
+    fwOnly:"Activity-by-activity technical screening criteria for the circular-economy objective — an additional financial-classification exercise.",
+    scopeCiteLabel:"EU Taxonomy Regulation (EU) 2020/852, Art. 8 (circular economy objective)",
+    scopeCiteUrl:"https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32020R0852"}
+);
+
+// ---------- render rails ----------
+function fwNode(id){
+  const f = frameworks[id];
+  const statuses = rows.filter(r=>r.fw===id).map(r=>r.status);
+  const worst = statuses.includes("mand") ? "mand" : (statuses.includes("pend") ? "pend" : "vol");
+  const statusClass = worst==="mand" ? "status-mandatory" : worst==="pend" ? "status-pending" : "status-voluntary";
+  const div = document.createElement("div");
+  div.className = `fw-node j-${f.j.toLowerCase()} ${statusClass}`;
+  div.dataset.fw = id;
+  div.dataset.j = f.j;
+  div.innerHTML = `<b><a href="${f.url}" target="_blank" rel="noopener" title="Open official source" onclick="event.stopPropagation()">${f.name} <span class="lnk">↗</span></a></b><span class="fw-code">${f.full}</span>`;
+  div.addEventListener("click", ()=>selectFramework(id));
+  return div;
+}
+
+document.getElementById("eu-rail").append(...Object.keys(frameworks).filter(k=>frameworks[k].rail==="eu").map(fwNode));
+document.getElementById("gl-rail").append(...Object.keys(frameworks).filter(k=>frameworks[k].rail==="gl").map(fwNode));
+document.getElementById("de-rail").append(...Object.keys(frameworks).filter(k=>frameworks[k].rail==="de").map(fwNode));
+document.getElementById("at-rail").append(...Object.keys(frameworks).filter(k=>frameworks[k].rail==="at").map(fwNode));
+document.getElementById("ch-rail").append(...Object.keys(frameworks).filter(k=>frameworks[k].rail==="ch").map(fwNode));
+
+const spineEl = document.getElementById("spine");
+modules.forEach(m=>{
+  const div = document.createElement("div");
+  div.className = "spine-node";
+  div.dataset.esrs = m.id;
+  div.innerHTML = `<div class="code">${m.code}</div><div class="name">${m.name}</div><div class="pillar">${m.pillar}</div>`;
+  div.addEventListener("click", ()=>selectModule(m.id));
+  spineEl.appendChild(div);
+});
+
+// ---------- filters ----------
+// ---------- actionable multi-facet filter ----------
+const filterFacets = {
+  jur:    [{id:"EU",label:"EU-wide"},{id:"GL",label:"Global voluntary"},{id:"DE",label:"Germany"},{id:"AT",label:"Austria"},{id:"CH",label:"Switzerland"}],
+  status: [{id:"mand",label:"Mandatory"},{id:"pend",label:"Transposing"},{id:"vol",label:"Voluntary"}],
+  scope:  [{id:"narrower",label:"⊆ narrower"},{id:"broader",label:"⊇ broader"},{id:"partial",label:"≈ partial"},{id:"coext",label:"= co-extensive"}],
+  conf:   [{id:"high",label:"High confidence"},{id:"moderate",label:"Reasoned"}]
+};
+const filterState = {
+  jur: new Set(filterFacets.jur.map(f=>f.id)),
+  status: new Set(filterFacets.status.map(f=>f.id)),
+  scope: new Set(filterFacets.scope.map(f=>f.id)),
+  conf: new Set(filterFacets.conf.map(f=>f.id))
+};
+
+Object.keys(filterFacets).forEach(key=>{
+  const wrap = document.getElementById(`f-${key}`);
+  filterFacets[key].forEach(opt=>{
+    const c = document.createElement("div");
+    c.className = "fchip on";
+    c.textContent = opt.label;
+    c.dataset.key = key; c.dataset.id = opt.id;
+    c.addEventListener("click", ()=>{
+      if(filterState[key].has(opt.id)) filterState[key].delete(opt.id); else filterState[key].add(opt.id);
+      c.classList.toggle("on", filterState[key].has(opt.id));
+      applyFilter();
+    });
+    wrap.appendChild(c);
+  });
+});
+
+document.getElementById("freset").addEventListener("click", ()=>{
+  Object.keys(filterFacets).forEach(key=>{
+    filterState[key] = new Set(filterFacets[key].map(f=>f.id));
+  });
+  document.querySelectorAll(".fchip").forEach(c=>c.classList.add("on"));
+  // Also clear any node selection/highlight — otherwise a prior click on a
+  // module or framework keeps things dimmed even after filters are reset.
+  document.getElementById("detail").classList.remove("show");
+  selectedEsrs = null; selectedFw = null;
+  clearHighlight();
+  document.getElementById("clearBtn").style.display = "none";
+  applyFilter();
+});
+
+function rowVisible(r){
+  const f = frameworks[r.fw];
+  return filterState.jur.has(f.j) && filterState.status.has(r.status)
+    && filterState.scope.has(r.scopeRel) && filterState.conf.has(r.scopeConf);
+}
+
+function applyFilter(){
+  const visibleFw = new Set();
+  const visibleMod = new Set();
+  let shownCount = 0;
+  rows.forEach(r=>{
+    if(rowVisible(r)){ visibleFw.add(r.fw); visibleMod.add(r.esrs); shownCount++; }
+  });
+  document.querySelectorAll(".fw-node").forEach(n=>{
+    n.style.display = visibleFw.has(n.dataset.fw) ? "" : "none";
+  });
+  document.querySelectorAll(".spine-node").forEach(n=>{
+    n.style.display = visibleMod.has(n.dataset.esrs) ? "" : "none";
+  });
+  document.querySelectorAll(".col[data-jur]").forEach(col=>{
+    const j = col.dataset.jur;
+    const anyVisible = [...visibleFw].some(fwId=>frameworks[fwId].j===j);
+    col.classList.toggle("empty-col", !anyVisible);
+  });
+  const fcount = document.getElementById("fcount");
+  fcount.textContent = shownCount===rows.length
+    ? `Showing all ${rows.length} connections`
+    : `Showing ${shownCount} of ${rows.length} connections · ${visibleFw.size} frameworks · ${visibleMod.size} modules`;
+  drawLines();
+}
+
+
+// ---------- selection & lines ----------
+let selectedEsrs = null, selectedFw = null;
+const svg = document.getElementById("lines");
+const dwrap = document.getElementById("diagram-wrap");
+
+function colorFor(j){
+  return j==="EU" ? "#1E4FBB" : j==="GL" ? "#2E7D6B" : j==="DE" ? "#2B2B2B" : j==="AT" ? "#8B2635" : "#D52B1E";
+}
+
+function drawLines(){
+  const wrapRect = dwrap.getBoundingClientRect();
+  svg.setAttribute("width", wrapRect.width);
+  svg.setAttribute("height", wrapRect.height);
+  svg.innerHTML = "";
+  rows.forEach(r=>{
+    const esrsEl = document.querySelector(`.spine-node[data-esrs="${r.esrs}"]`);
+    const fwEl = document.querySelector(`.fw-node[data-fw="${r.fw}"]`);
+    if(!esrsEl || !fwEl || !rowVisible(r)) return;
+    const eR = esrsEl.getBoundingClientRect();
+    const fR = fwEl.getBoundingClientRect();
+    const x1 = eR.left - wrapRect.left;
+    const y1 = eR.top - wrapRect.top + eR.height/2;
+    const x2 = fR.right - wrapRect.left;
+    const y2 = fR.top - wrapRect.top + fR.height/2;
+    const midX = (x1+x2)/2;
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    const d = `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+    path.setAttribute("d", d);
+    path.setAttribute("fill","none");
+    path.setAttribute("stroke", colorFor(frameworks[r.fw].j));
+    path.dataset.esrs = r.esrs;
+    path.dataset.fw = r.fw;
+    let opacity = 0.16, width = 1.2, dash="";
+    if(r.status==="pend") dash="5,4"; else if(r.status==="vol") dash="1,4";
+    if(selectedEsrs){
+      opacity = (r.esrs===selectedEsrs) ? 0.85 : 0.05;
+      width = (r.esrs===selectedEsrs) ? 2 : 1;
+    } else if(selectedFw){
+      opacity = (r.fw===selectedFw) ? 0.85 : 0.05;
+      width = (r.fw===selectedFw) ? 2 : 1;
+    }
+    path.setAttribute("stroke-opacity", opacity);
+    path.setAttribute("stroke-width", width);
+    if(dash) path.setAttribute("stroke-dasharray", dash);
+    svg.appendChild(path);
+
+    // Scope-relationship badge (A: set-notation symbol) — click opens the full
+    // shared/ESRS-only/framework-only breakdown in the detail panel (C).
+    if(r.scopeRel){
+      const midY = (y1+y2)/2;
+      const glyphOpacity = selectedEsrs ? (r.esrs===selectedEsrs?1:0.08) : selectedFw ? (r.fw===selectedFw?1:0.08) : 0.95;
+      const glyphColor = r.scopeConf==="high" ? "#12181F" : "#8a5a1a";
+      const symbol = {narrower:"⊆", broader:"⊇", partial:"≈", coext:"="}[r.scopeRel];
+      const g = document.createElementNS("http://www.w3.org/2000/svg","g");
+      g.setAttribute("transform", `translate(${midX}, ${midY})`);
+      g.setAttribute("opacity", glyphOpacity);
+      g.setAttribute("pointer-events", "auto");
+      g.style.cursor = "pointer";
+      g.addEventListener("click", ()=>{ selectFramework(r.fw); });
+      const titleEl = document.createElementNS("http://www.w3.org/2000/svg","title");
+      titleEl.textContent = `${symbol} — click for scope breakdown (${r.scopeConf==="high"?"official mapping cited":"reasoned, no official mapping"})`;
+      g.appendChild(titleEl);
+      const bg = document.createElementNS("http://www.w3.org/2000/svg","circle");
+      bg.setAttribute("r","10"); bg.setAttribute("fill","#fff");
+      bg.setAttribute("stroke", glyphColor); bg.setAttribute("stroke-width", r.scopeConf==="high" ? "1.4" : "1.4");
+      if(r.scopeConf!=="high") bg.setAttribute("stroke-dasharray","3,2");
+      g.appendChild(bg);
+      const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+      txt.setAttribute("x","0"); txt.setAttribute("y","1"); txt.setAttribute("text-anchor","middle"); txt.setAttribute("dominant-baseline","middle");
+      txt.setAttribute("font-size","13"); txt.setAttribute("font-weight","600");
+      txt.setAttribute("font-family","ui-monospace, SFMono-Regular, Consolas, monospace");
+      txt.setAttribute("fill", glyphColor); txt.textContent = symbol;
+      g.appendChild(txt);
+      svg.appendChild(g);
+    }
+  });
+}
+
+function clearHighlight(){
+  document.querySelectorAll(".fw-node, .spine-node").forEach(n=>n.classList.remove("dim","hi"));
+}
+
+function selectModule(id){
+  selectedEsrs = id; selectedFw = null;
+  clearHighlight();
+  const connectedFw = new Set(rows.filter(r=>r.esrs===id).map(r=>r.fw));
+  document.querySelectorAll(".spine-node").forEach(n=>{
+    n.classList.toggle("hi", n.dataset.esrs===id);
+    n.classList.toggle("dim", n.dataset.esrs!==id);
+  });
+  document.querySelectorAll(".fw-node").forEach(n=>{
+    n.classList.toggle("hi", connectedFw.has(n.dataset.fw));
+    n.classList.toggle("dim", !connectedFw.has(n.dataset.fw));
+  });
+  showDetailForModule(id);
+  document.getElementById("clearBtn").style.display = "block";
+  drawLines();
+}
+
+function selectFramework(id){
+  selectedFw = id; selectedEsrs = null;
+  clearHighlight();
+  const connectedEsrs = new Set(rows.filter(r=>r.fw===id).map(r=>r.esrs));
+  document.querySelectorAll(".fw-node").forEach(n=>{
+    n.classList.toggle("hi", n.dataset.fw===id);
+    n.classList.toggle("dim", n.dataset.fw!==id);
+  });
+  document.querySelectorAll(".spine-node").forEach(n=>{
+    n.classList.toggle("hi", connectedEsrs.has(n.dataset.esrs));
+    n.classList.toggle("dim", !connectedEsrs.has(n.dataset.esrs));
+  });
+  showDetailForFramework(id);
+  document.getElementById("clearBtn").style.display = "block";
+  drawLines();
+}
+
+function statusTag(s){
+  if(s==="mand") return '<span class="tag mand">MANDATORY</span>';
+  if(s==="pend") return '<span class="tag pend">TRANSPOSING</span>';
+  return '<span class="tag vol">VOLUNTARY</span>';
+}
+function jTag(j){ return `<span class="tag ${j.toLowerCase()}">${j}</span>`; }
+
+const scopeSymbols = {narrower:"⊆ narrower", broader:"⊇ broader", partial:"≈ partial overlap", coext:"= co-extensive"};
+function scopeBlock(r){
+  if(!r.scopeRel) return `<div class="field-note" style="color:var(--muted);font-style:italic;margin-top:6px;">Scope-nuance QA not yet done for this connection — pilot so far covers ESRS E1 only.</div>`;
+  const confBadge = r.scopeConf==="high"
+    ? '<span class="tag" style="background:#5B6570;">HIGH CONFIDENCE</span>'
+    : '<span class="tag" style="background:#B8862D;">REASONED / NO OFFICIAL MAPPING</span>';
+  return `
+    <div class="field"><b>Scope relation</b><span>${scopeSymbols[r.scopeRel]} &nbsp; ${confBadge}</span></div>
+    <div class="field"><b>Shared scope</b><span>${r.shared}</span></div>
+    <div class="field"><b>ESRS-only</b><span>${r.esrsOnly}</span></div>
+    <div class="field"><b>Framework-only (additionality)</b><span>${r.fwOnly}</span></div>
+    <div class="field"><b>Scope-comparison source</b><span>${r.scopeCiteUrl ? `<a href="${r.scopeCiteUrl}" target="_blank" rel="noopener">${r.scopeCiteLabel} ↗</a>` : r.scopeCiteLabel}</span></div>`;
+}
+
+function showDetailForModule(id){
+  const m = modules.find(x=>x.id===id);
+  const rs = rows.filter(r=>r.esrs===id);
+  document.getElementById("dtitle").textContent = `${m.code} — ${m.name}`;
+  document.getElementById("drows").innerHTML = rs.map(r=>{
+    const f = frameworks[r.fw];
+    return `<div class="drow">
+      <div><div class="fwname"><a href="${f.url}" target="_blank" rel="noopener">${f.name} ↗</a></div><div class="meta">${f.full}</div><div style="margin-top:6px">${jTag(f.j)}${statusTag(r.status)}</div></div>
+      <div>
+        <div class="field"><b>Threshold</b><span>${r.threshold}</span></div>
+        <div class="field"><b>Reason</b><span>${r.reason}</span></div>
+        <div class="field"><b>Submitted to</b><span>${r.submitted}</span></div>
+        <div class="field"><b>Relationship</b><span>${r.rel}</span></div>
+        ${scopeBlock(r)}
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("detail").classList.add("show");
+}
+
+function showDetailForFramework(id){
+  const f = frameworks[id];
+  const rs = rows.filter(r=>r.fw===id);
+  document.getElementById("dtitle").innerHTML = `${f.name} — connected ESRS modules &nbsp; <a href="${f.url}" target="_blank" rel="noopener" style="color:#9FB4CE;font-size:12px;">source ↗</a>`;
+  document.getElementById("drows").innerHTML = rs.map(r=>{
+    const m = modules.find(x=>x.id===r.esrs);
+    return `<div class="drow">
+      <div><div class="fwname">${m.code} — ${m.name}</div><div class="meta">${m.pillar}</div><div style="margin-top:6px">${statusTag(r.status)}</div></div>
+      <div>
+        <div class="field"><b>Threshold</b><span>${r.threshold}</span></div>
+        <div class="field"><b>Reason</b><span>${r.reason}</span></div>
+        <div class="field"><b>Submitted to</b><span>${r.submitted}</span></div>
+        <div class="field"><b>Relationship</b><span>${r.rel}</span></div>
+        ${scopeBlock(r)}
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("detail").classList.add("show");
+}
+
+document.getElementById("dclose").addEventListener("click", ()=>{
+  document.getElementById("detail").classList.remove("show");
+  selectedEsrs=null; selectedFw=null; clearHighlight();
+  document.getElementById("clearBtn").style.display="none";
+  drawLines();
+});
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  document.getElementById("detail").classList.remove("show");
+  selectedEsrs=null; selectedFw=null; clearHighlight();
+  document.getElementById("clearBtn").style.display="none";
+  drawLines();
+});
+
+window.addEventListener("resize", ()=>{ clearTimeout(window._rt); window._rt=setTimeout(drawLines, 120); });
+setTimeout(drawLines, 60);
+
+// ---------- schema table ----------
+const tbody = document.getElementById("tbody");
+function renderTable(){
+  const q = document.getElementById("search").value.toLowerCase();
+  const fj = document.getElementById("fJur").value;
+  const fs = document.getElementById("fStatus").value;
+  tbody.innerHTML = rows.filter(r=>{
+    const m = modules.find(x=>x.id===r.esrs);
+    const f = frameworks[r.fw];
+    if(fj && f.j!==fj) return false;
+    if(fs && r.status!==fs) return false;
+    if(q){
+      const hay = `${m.code} ${m.name} ${f.name} ${f.full} ${r.threshold} ${r.reason} ${r.submitted} ${r.shared||""} ${r.esrsOnly||""} ${r.fwOnly||""}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  }).map(r=>{
+    const m = modules.find(x=>x.id===r.esrs);
+    const f = frameworks[r.fw];
+    const stClass = r.status==="mand" ? "st-mand" : r.status==="pend" ? "st-pend" : "st-vol";
+    const stLabel = r.status==="mand" ? "Mandatory" : r.status==="pend" ? "Transposing" : "Voluntary";
+    const scopeCell = r.scopeRel
+      ? `${scopeSymbols[r.scopeRel]}<br><span style="font-size:10px;padding:1px 5px;border-radius:8px;color:#fff;background:${r.scopeConf==='high'?'#5B6570':'#B8862D'};">${r.scopeConf==='high'?'HIGH CONF.':'REASONED'}</span>`
+      : `<span style="color:var(--muted);font-style:italic;">not yet QA'd</span>`;
+    const scopeDetailCell = r.scopeRel
+      ? `<b>Shared:</b> ${r.shared}<br><b>ESRS-only:</b> ${r.esrsOnly}<br><b>Framework-only:</b> ${r.fwOnly}`
+      : `<span style="color:var(--muted);">—</span>`;
+    const scopeCiteCell = r.scopeCiteUrl
+      ? `<a href="${r.scopeCiteUrl}" target="_blank" rel="noopener">${r.scopeCiteLabel} ↗</a>`
+      : (r.scopeCiteLabel || `<span style="color:var(--muted);">—</span>`);
+    return `<tr>
+      <td class="code">${m.code}<br><span style="font-weight:400;font-family:var(--sans);color:var(--muted);font-size:11px;">${m.name}</span></td>
+      <td><b><a href="${f.url}" target="_blank" rel="noopener">${f.name} ↗</a></b><br><span style="color:var(--muted);font-size:11px;">${f.full}</span></td>
+      <td>${f.rail==="eu"?"EU Directive/Regulation":f.rail==="gl"?"Voluntary standard / disclosure platform":"National Law"}</td>
+      <td><span class="jdot" style="background:${colorFor(f.j)}"></span>${f.j}</td>
+      <td class="status"><span class="${stClass}">${stLabel}</span></td>
+      <td>${r.threshold}</td>
+      <td>${r.reason}</td>
+      <td>${r.submitted}</td>
+      <td>${r.rel}</td>
+      <td>${scopeCell}</td>
+      <td>${scopeDetailCell}</td>
+      <td>${scopeCiteCell}</td>
+    </tr>`;
+  }).join("");
+}
+document.getElementById("search").addEventListener("input", renderTable);
+document.getElementById("fJur").addEventListener("change", renderTable);
+document.getElementById("fStatus").addEventListener("change", renderTable);
+renderTable();
+</script>
+</body>
+</html>
